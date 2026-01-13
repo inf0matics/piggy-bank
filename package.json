@@ -1,6 +1,6 @@
 {
   "name": "piggy-bank",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "type": "module",
   "homepage": "https://github.com/inf0matics/piggy-bank",
   "scripts": {
