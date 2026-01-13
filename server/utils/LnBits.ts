@@ -52,7 +52,6 @@ export default class LnBits {
 
   async getLnurlPs(): Promise<LnUrlPayResponse | null> {
     const response = await fetch(`${this.url}/lnurlp/api/v1/links`, this.getFetchOptions())
-
     if (!response.ok) {
       // If there are no lnurlp or extension installed it return 403
       return null
@@ -69,7 +68,6 @@ export default class LnBits {
     }
 
     const json = await response.json()
-    console.log('LnBits getLastPayment response:', json)
     const data = PaymentResponse.parse(json)
     if (data.length == 0) {
       return null

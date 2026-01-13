@@ -112,6 +112,17 @@ const fetchData = async () => {
       return
     }
   }
+  if (response == undefined) {
+    toast.add({
+      title: 'Error',
+      description: 'No response from backend',
+      icon: 'i-heroicons-x-circle-16-solid',
+      color: 'error',
+      duration: 60 * 1000,
+      close: false,
+    })
+    return
+  }
 
   title.value = `${response.name}'s`
   lastUpdate.value = formatTime()
