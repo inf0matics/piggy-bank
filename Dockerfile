@@ -13,12 +13,12 @@ WORKDIR /app
 # Build
 FROM base AS build
 
+# Install Git if package.json or package-lock.json contains dependencies that require it (e.g., dependencies with 'git+' URLs)
+RUN apt-get update && apt-get install -y git
+
 COPY --link package.json .
 # ERROR  Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try npm i again after removing both package-lock.json and node_modules directory.
 # COPY package-lock.json .
-
-# Install Git only if package.json or package-lock.json contains dependencies that require it (e.g., dependencies with 'git+' URLs)
-RUN if grep -q 'git+' package.json package-lock.json; then apt-get update && apt-get install -y git; fi
 
 RUN npm install --production=false
 
