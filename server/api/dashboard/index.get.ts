@@ -71,8 +71,10 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
   let address: string | null = null
   let lnurl: string | null = null
 
-  if (lnurlPs && lnurlPs.length > 0 && lnurlPs[0].username) {
+  if (lnurlPs && lnurlPs.length > 0 && lnurlPs[0].lnurl) {
     lnurl = lnurlPs[0].lnurl
+  }
+  if (lnurlPs && lnurlPs.length > 0 && lnurlPs[0].username) {
     address = `${lnurlPs[0].username}@${new URL(user.lnbits.url).hostname}`
   }
 
