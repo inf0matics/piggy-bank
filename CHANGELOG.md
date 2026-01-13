@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.6.2
+
+[compare changes](https://github.com/thespielplatz/piggy-bank/compare/v1.6.1...v1.6.2)
+
+### 🩹 Fixes
+
+- Always install git into the build stage ([9c5f2a9](https://github.com/thespielplatz/piggy-bank/commit/9c5f2a9))
+
+### ❤️ Contributors
+
+- Thespielplatz <informatics@gmx.net>
+
 ## v1.6.1
 
 [compare changes](https://github.com/thespielplatz/piggy-bank/compare/v1.6.0...v1.6.1)
