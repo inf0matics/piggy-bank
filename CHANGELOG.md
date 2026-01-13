@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v1.6.0
+
+[compare changes](https://github.com/thespielplatz/piggy-bank/compare/v1.5.1...v1.6.0)
+
+### 🚀 Enhancements
+
+- Update to nuxt 4 ([cadb80b](https://github.com/thespielplatz/piggy-bank/commit/cadb80b))
+
+### 🩹 Fixes
+
+- Style and typescript ([37bb776](https://github.com/thespielplatz/piggy-bank/commit/37bb776))
+- Split lnurlp and lnurl-address into seperate checks ([0274b14](https://github.com/thespielplatz/piggy-bank/commit/0274b14))
+
+### 🏡 Chore
+
+- Npm audit fix ([a7083a3](https://github.com/thespielplatz/piggy-bank/commit/a7083a3))
+
+### ❤️ Contributors
+
+- Thespielplatz <informatics@gmx.net>
+
 ## v1.5.1
 
 [compare changes](https://github.com/thespielplatz/piggy-bank/compare/v1.5.0...v1.5.1)
