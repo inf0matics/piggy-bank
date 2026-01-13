@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-ARG NODE_VERSION=22.11.0
+ARG NODE_VERSION=22.21.1
 
 FROM node:${NODE_VERSION}-slim AS base
 
@@ -14,14 +14,11 @@ WORKDIR /app
 FROM base AS build
 
 COPY --link package.json .
-COPY package-lock.json .
+# ERROR  Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try npm i again after removing both package-lock.json and node_modules directory.
+# COPY package-lock.json .
 
 # Install Git only if package.json or package-lock.json contains dependencies that require it (e.g., dependencies with 'git+' URLs)
 RUN if grep -q 'git+' package.json package-lock.json; then apt-get update && apt-get install -y git; fi
-
-RUN rm package-lock.json
-# This isn’t working because the dependencies in package-lock.json are specific to the architecture 
-# of the machine where npm install was run.
 
 RUN npm install --production=false
 
