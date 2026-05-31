@@ -13,7 +13,9 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   globalTeardown: './e2e/global-teardown.ts',
   use: {
-    baseURL: 'http://localhost:3000',
+    // 127.0.0.1 (not localhost) so we always hit the mapped Docker port over
+    // IPv4 and never an IPv6-only listener; 3100 is the E2E app's dedicated port.
+    baseURL: 'http://127.0.0.1:3100',
     trace: 'on-first-retry',
   },
   projects: [

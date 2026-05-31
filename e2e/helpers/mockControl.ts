@@ -1,7 +1,7 @@
 // Helper for driving the lnbits-mock test control API from tests (Node context).
 // The mock's control endpoints are reached on the host-mapped port.
 
-const MOCK_URL = process.env.LNBITS_MOCK_URL || 'http://localhost:5001'
+const MOCK_URL = process.env.LNBITS_MOCK_URL || 'http://127.0.0.1:5001'
 
 export interface MockState {
   balance?: number // sats
