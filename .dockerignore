@@ -1,0 +1,14 @@
+node_modules
+.git
+.nuxt
+.nitro
+.output
+.cache
+.data
+data
+dist
+playwright-report
+test-results
+.playwright-mcp
+*.log
+.DS_Store

@@ -1,0 +1,38 @@
+# Full E2E stack: the piggybank app + the LNBits mock on a shared network.
+# Playwright runs on the host and drives a browser against the mapped app port,
+# and calls the mock's control API on the mapped mock port.
+services:
+  lnbits-mock:
+    build:
+      context: ./e2e/mocks/lnbits
+    # Container serves on :80; the app reaches it at http://lnbits-mock.
+    # Host port 5001 is mapped for Playwright control calls.
+    ports:
+      - '5001:80'
+
+  piggybank:
+    # Pin to amd64 (production's architecture): the app's optional native deps
+    # (utf-8-validate/bufferutil via ws) ship amd64 prebuilts, so no source
+    # compilation is needed. On arm64 there's no prebuilt and node:slim has no
+    # toolchain, so an unpinned build would fail.
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # Override the config path so the app loads the test fixture.
+      CONFIG_PATH: /config/config.test.json
+      NUXT_HOST: '0.0.0.0'
+      NUXT_PORT: '3000'
+    volumes:
+      - ./e2e/fixtures/config.test.json:/config/config.test.json:ro
+    ports:
+      - '3000:3000'
+    depends_on:
+      lnbits-mock:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 30

@@ -34,7 +34,9 @@ export const ConfigSchema = z.object({
 export type ConfigType = z.infer<typeof ConfigSchema>
 
 export const parseConfig = (): ConfigType => {
-  const configFilePath = path.resolve(process.cwd(), 'config.json')
+  const configFilePath = process.env.CONFIG_PATH
+    ? path.resolve(process.env.CONFIG_PATH)
+    : path.resolve(process.cwd(), 'config.json')
 
   try {
     const configData = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'))

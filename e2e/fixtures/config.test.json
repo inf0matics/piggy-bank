@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "id": "test-user",
+      "name": "Test",
+      "accessKey": "0000",
+      "lnbits": {
+        "url": "http://lnbits-mock",
+        "invoiceKey": "test-invoice-key"
+      }
+    }
+  ],
+  "electrumXServers": []
+}
