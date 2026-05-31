@@ -7,6 +7,7 @@ export interface MockState {
   balance?: number // sats
   username?: string | null
   lnurl?: string | null
+  rate?: number // BTC/EUR
   payment?: { sats: number, comment?: string | null } | null
 }
 

@@ -22,6 +22,8 @@ services:
     environment:
       # Override the config path so the app loads the test fixture.
       CONFIG_PATH: /config/config.test.json
+      # Point the BTC/EUR rate lookup at the mock so tests need no outbound internet.
+      KRAKEN_URL: http://lnbits-mock
       NUXT_HOST: '0.0.0.0'
       NUXT_PORT: '3000'
     volumes:

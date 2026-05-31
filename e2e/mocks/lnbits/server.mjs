@@ -5,6 +5,10 @@
 //   GET /lnurlp/api/v1/links      -> [{ username, lnurl }]
 //   GET /api/v1/payments?limit=1  -> [{ amount, memo, extra, time }]
 //
+// It also stands in for the Kraken ticker (see server/utils/getKrakenBtcRate.ts),
+// so the app needs no outbound internet during tests:
+//   GET /0/public/Ticker          -> { result: { XXBTZEUR: { c: [rate] } } }
+//
 // Plus a test-only control API (NOT part of the real LNBits API):
 //   POST /test/reset              -> restore default state
 //   POST /test/set                -> override state fields { balance, lnurl, username, payment }
@@ -25,6 +29,8 @@ const defaultState = () => ({
   lnurl: 'LNURL1DP68GURN8GHJ7MRWW4EXCTNXD9SHG6NPVCHXXMMD9AKXUATJD3CZ7MOCKLNURLPAY',
   // { amountSats, comment, time } | null
   lastPayment: null,
+  // BTC/EUR rate served via the Kraken-shaped ticker endpoint.
+  rateEur: 50_000,
 })
 
 let state = defaultState()
@@ -93,6 +99,13 @@ const server = createServer(async (req, res) => {
     case 'GET /api/v1/payments':
       return send(res, 200, paymentList())
 
+    // --- Kraken ticker (consumed by getKrakenBtcRate) ---
+    case 'GET /0/public/Ticker':
+      return send(res, 200, {
+        error: [],
+        result: { XXBTZEUR: { c: [String(state.rateEur)] } },
+      })
+
     // --- Test control API ---
     case 'POST /test/reset':
       state = defaultState()
@@ -103,6 +116,7 @@ const server = createServer(async (req, res) => {
       if (body.balance !== undefined) state.balanceSats = Number(body.balance)
       if (body.username !== undefined) state.username = body.username
       if (body.lnurl !== undefined) state.lnurl = body.lnurl
+      if (body.rate !== undefined) state.rateEur = Number(body.rate)
       if (body.payment !== undefined) {
         state.lastPayment = body.payment
           ? {
