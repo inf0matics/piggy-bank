@@ -13,4 +13,15 @@ export default function globalTeardown() {
   execSync(`docker compose -f ${COMPOSE_FILE} down --volumes --remove-orphans`, {
     stdio: 'inherit',
   })
+
+  // Remove dangling images left behind by `up --build`: on each rebuild the
+  // previous app image loses its tag and becomes <none>. This prunes only
+  // untagged, unused images (safe). Build cache and the current tagged images
+  // are kept on purpose so the next rebuild stays fast.
+  console.log('[e2e] pruning dangling docker images...')
+  try {
+    execSync('docker image prune -f', { stdio: 'inherit' })
+  } catch {
+    console.warn('[e2e] docker image prune failed (ignored)')
+  }
 }
