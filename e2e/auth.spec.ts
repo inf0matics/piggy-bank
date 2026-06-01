@@ -46,6 +46,28 @@ test('PIN login - physical keyboard', async ({ page }) => {
   await page.waitForURL('**/dashboard')
 })
 
+test('Expired session - /dashboard redirects to login without an error toast', async ({ page, context }) => {
+  // Simulate a user returning after the refresh token has lapsed: a stale
+  // refresh_token cookie that no longer validates. The dashboard must redirect
+  // to the login page and must NOT flash an "Error" toast from a polled fetch
+  // that runs with no access token (regression for the stale-session bug).
+  await context.addCookies([{
+    name: 'refresh_token',
+    value: 'stale.invalid.token',
+    domain: '127.0.0.1',
+    path: '/',
+  }])
+
+  await page.goto('/dashboard')
+
+  await page.waitForURL(url => url.pathname === '/')
+  await expect(page.getByText('Piggy Bank')).toBeVisible()
+
+  // Give any erroneous poll time to resolve, then assert no error toast appeared.
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByText('Error', { exact: true })).toHaveCount(0)
+})
+
 test('Already logged in - navigating to / redirects to dashboard', async ({ page }) => {
   await login(page)
 

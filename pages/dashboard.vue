@@ -68,6 +68,11 @@ let intervalId: NodeJS.Timeout | null = null
 
 onMounted(async () => {
   await $auth.redirectIfLoggedOut()
+  // When the session has expired (e.g. returning after the refresh token
+  // lapsed), redirectIfLoggedOut navigates to the login page. Don't start
+  // polling in that case: an authenticated fetch with no access token would
+  // 401 and flash a spurious "Error" toast on the page we're leaving.
+  if (!(await $auth.isLoggedIn())) return
   startPolling()
 })
 
