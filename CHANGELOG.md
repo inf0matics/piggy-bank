@@ -1,6 +1,32 @@
 # Changelog
 
 
+## v1.6.3
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.2...v1.6.3)
+
+### 🏡 Chore
+
+- **e2e:** Add Playwright test setup and MCP server ([4904b5c](https://github.com/inf0matics/piggy-bank/commit/4904b5c))
+- Update Node to 24 LTS ([c501c07](https://github.com/inf0matics/piggy-bank/commit/c501c07))
+
+### ✅ Tests
+
+- **e2e:** Add Docker-based test environment with LNBits mock ([e074871](https://github.com/inf0matics/piggy-bank/commit/e074871))
+- **e2e:** Mock the Kraken rate for hermetic tests ([5e290e2](https://github.com/inf0matics/piggy-bank/commit/5e290e2))
+- **e2e:** Run the app on a dedicated port to avoid dev-server collision ([52e6507](https://github.com/inf0matics/piggy-bank/commit/52e6507))
+- **e2e:** Prune dangling images in teardown ([3f95eec](https://github.com/inf0matics/piggy-bank/commit/3f95eec))
+- **e2e:** Cover Lightning auth, dashboard, deposit and print flows ([8bb0fd4](https://github.com/inf0matics/piggy-bank/commit/8bb0fd4))
+
+### 🤖 CI
+
+- **e2e:** Run Playwright e2e tests on push and PR to main ([62701a7](https://github.com/inf0matics/piggy-bank/commit/62701a7))
+- **e2e:** Bump actions to v5 for Node 24 runtime ([5cb4688](https://github.com/inf0matics/piggy-bank/commit/5cb4688))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.6.2
 
 [compare changes](https://github.com/thespielplatz/piggy-bank/compare/v1.6.1...v1.6.2)
