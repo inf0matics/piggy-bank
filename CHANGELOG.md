@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.6.4
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.3...v1.6.4)
+
+### 🩹 Fixes
+
+- **dashboard:** Don't poll (and toast "Error") when session expired ([0f71086](https://github.com/inf0matics/piggy-bank/commit/0f71086))
+
+### 💅 Refactors
+
+- Remove Bitcoin onchain & ElectrumX support ([276f4dd](https://github.com/inf0matics/piggy-bank/commit/276f4dd))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.6.3
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.2...v1.6.3)
