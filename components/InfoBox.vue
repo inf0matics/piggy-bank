@@ -13,7 +13,6 @@
           <InfoBoxPopupContent
             :lnurl="lnurl"
             :address="address"
-            :onchain="onchain"
             @close="closePopup()"
           />
         </template>
@@ -57,7 +56,7 @@
 <script setup lang="ts">
 
 const isOpen = ref(false)
-const { lnurl, address, payment, onchain } = defineProps<{
+const { lnurl, address, payment } = defineProps<{
   lnurl: string,
   address: string,
   payment: {
@@ -65,7 +64,6 @@ const { lnurl, address, payment, onchain } = defineProps<{
     comment: string | null,
     time: number
   } | null,
-  onchain: { label: string, address: string }[],
 }>()
 
 const hasDepositAvaliable = computed(() => lnurl != '' || address != '')

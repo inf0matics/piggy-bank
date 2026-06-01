@@ -1,6 +1,5 @@
 import z from 'zod'
 import type { UserSchema } from '~/server/domain/config'
-import { SyncedBlockchainData } from '~/server/domain/SyncedBlockchainData'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits from '~/server/utils/LnBits'
 
@@ -16,10 +15,6 @@ export const DashboardDto = z.object({
     comment: z.string().nullable(),
     time: z.number(),
   }).nullable(),
-  onchain: z.array(z.object({
-    label: z.string(),
-    address: z.string(),
-  })),
 })
 export type DashboardDto = z.infer<typeof DashboardDto>
 
@@ -40,29 +35,7 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
   }
   const lnurlPs = await lnbits.getLnurlPs()
   const lastLnbitsPayment = await lnbits.getLastPayment()
-  const lnbitsSats = Math.floor(lnbitsBalance / 1000)
-
-  const blockchainData = useBlockchainData()
-  if (user.onchain?.length > 0) {
-    if (!(blockchainData instanceof SyncedBlockchainData)
-      && blockchainData.reason === 'no-servers') {
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Onchain addresses configured, but no servers available. Please check your configuration.`,
-      })
-    }
-  }
-
-  let onchainSats = 0
-  user.onchain?.forEach((onchain) => {
-    if (typeof onchain === 'string') {
-      onchainSats += blockchainData.getBalance(onchain)
-    } else {
-      onchainSats += blockchainData.getBalance(onchain.address)
-    }
-  })
-
-  const sats = lnbitsSats + onchainSats
+  const sats = Math.floor(lnbitsBalance / 1000)
 
   const btc = sats / 100_000_000
   const rate = await getKrakenBtcRate()
@@ -87,13 +60,6 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     }
   }
 
-  const onchain = user.onchain?.map((onchain) => {
-    if (typeof onchain === 'string') {
-      return { label: 'OnChain', address: onchain }
-    }
-    return onchain
-  })
-
   return DashboardDto.parse({
     name: user.name,
     sats,
@@ -102,6 +68,5 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     lnurl,
     address,
     payment,
-    onchain,
   })
 })

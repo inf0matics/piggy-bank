@@ -1,34 +1,23 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
-import { ElectrumXServer } from './electrumX/models/ElectrumXServer'
 
 const LnBitsSchema = z.object({
   url: z.string(),
   invoiceKey: z.string(),
 })
 
-const OnChainSchema = z.union([
-  z.string(),
-  z.object({
-    label: z.string(),
-    address: z.string(),
-  }),
-])
-
 const UserSchema = z.object({
   id: z.string(),
   name: z.string(),
   accessKey: z.string(),
   lnbits: LnBitsSchema,
-  onchain: z.array(OnChainSchema).optional().default([]),
 })
 
 export type UserSchema = z.infer<typeof UserSchema>
 
 export const ConfigSchema = z.object({
   users: z.array(UserSchema).default([]).optional(),
-  electrumXServers: z.array(ElectrumXServer).optional(),
 })
 
 export type ConfigType = z.infer<typeof ConfigSchema>

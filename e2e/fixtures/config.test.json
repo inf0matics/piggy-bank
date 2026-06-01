@@ -9,6 +9,5 @@
         "invoiceKey": "test-invoice-key"
       }
     }
-  ],
-  "electrumXServers": []
+  ]
 }

@@ -30,7 +30,9 @@ test('PIN login - wrong PIN shows error and stays on login', async ({ page }) =>
   }
   await page.getByRole('button', { name: 'Enter', exact: true }).click()
 
-  await expect(page.getByText('Code not valid')).toBeVisible()
+  // exact match targets the toast title only; a substring match also hits the
+  // aria-live alert region ("Notification Code not valid") and trips strict mode.
+  await expect(page.getByText('Code not valid', { exact: true })).toBeVisible()
   expect(new URL(page.url()).pathname).toBe('/')
 })
 

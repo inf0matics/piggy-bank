@@ -54,10 +54,9 @@ const tabs = ref<{ title: string, label: string, icon: string, qrCode?: string }
 const tabIndex = ref(0)
 const toast = useToast()
 
-const { lnurl, address, onchain } = defineProps<{
+const { lnurl, address } = defineProps<{
   lnurl: string,
   address: string,
-  onchain: { label: string, address: string }[],
 }>()
 
 onMounted(() => {
@@ -77,14 +76,6 @@ onMounted(() => {
       qrCode: lnurl,
     })
   }
-  onchain.forEach((chain) => {
-    tabs.value.push({
-      title: chain.label,
-      label: chain.label,
-      icon: 'i-akar-icons-link-chain',
-      qrCode: chain.address,
-    })
-  })
 })
 
 const onTabChange = (payload: string | number) => {
