@@ -14,40 +14,52 @@
         {{ status }}
       </div>
       <div class="h-4" />
-      <div class="grid grid-cols-3 gap-4 p-4 bg-white shadow-md rounded-md">
-        <UButton
-          v-for="data in keys"
-          :key="data.key"
-          color="primary"
-          :disabled="['enter', 'delete'].includes(data.type) && code.length === 0"
-          @click="handleButtonPress(data)"
-        >
-          <UIcon
-            v-if="data.type === 'enter'"
-            name="i-heroicons-arrow-turn-down-left-16-solid"
-            class="w-8 h-8"
-          />
-          <UIcon
-            v-if="data.type === 'delete'"
-            name="i-heroicons-backspace-16-solid"
-            class="w-8 h-8"
-          />
-          <div
-            v-if="data.type === 'key'"
-            class="text-4xl font-bold"
+      <div class="flex flex-col w-fit">
+        <div class="grid grid-cols-3 gap-4 p-4 bg-white shadow-md rounded-md">
+          <UButton
+            v-for="data in keys"
+            :key="data.key"
+            color="primary"
+            :disabled="['enter', 'delete'].includes(data.type) && code.length === 0"
+            @click="handleButtonPress(data)"
           >
-            {{ data.key }}
-          </div>
-          <div>{{ data.chars }}</div>
-        </UButton>
+            <UIcon
+              v-if="data.type === 'enter'"
+              name="i-heroicons-arrow-turn-down-left-16-solid"
+              class="w-8 h-8"
+            />
+            <UIcon
+              v-if="data.type === 'delete'"
+              name="i-heroicons-backspace-16-solid"
+              class="w-8 h-8"
+            />
+            <div
+              v-if="data.type === 'key'"
+              class="text-4xl font-bold"
+            >
+              {{ data.key }}
+            </div>
+            <div>{{ data.chars }}</div>
+          </UButton>
+        </div>
+        <div class="h-2" />
+        <div class="text-center text-xs font-bold">
+          Powered by <UIcon
+            name="i-bitcoin-icons-lightning-filled"
+            class="text-lg -mb-1"
+          />Lightning
+        </div>
+        <div class="h-2" />
+        <div class="flex items-center justify-between gap-2 text-xs font-bold bg-dodgerblue-50 border border-dodgerblue-200 rounded-md px-3 py-2">
+          <span>🐷 Want to create one for a friend?</span>
+          <NuxtLink
+            to="/admin"
+            class="whitespace-nowrap text-dodgerblue-600 hover:underline"
+          >
+            Start here →
+          </NuxtLink>
+        </div>
       </div>
-    </div>
-    <div class="h-2" />
-    <div class="text-center text-xs font-bold">
-      Powered by <UIcon
-        name="i-bitcoin-icons-lightning-filled"
-        class="text-lg -mb-1"
-      />Lightning
     </div>
   </div>
 </template>
