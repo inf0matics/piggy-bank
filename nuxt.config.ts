@@ -4,6 +4,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@thespielplatz/nuxt-auth',
     '@thespielplatz/nuxt-dev-base',
+    '@logto/nuxt',
   ],
   devtools: { enabled: true },
   app: {
@@ -21,6 +22,23 @@ export default defineNuxtConfig({
   ui: {
     theme: {
       colors: ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'footer'],
+    },
+  },
+  runtimeConfig: {
+    // Logto admin authentication. Secrets are supplied via NUXT_LOGTO_* env
+    // vars (see .env.example), which override these empty placeholders.
+    logto: {
+      endpoint: '',
+      appId: '',
+      appSecret: '',
+      cookieEncryptionKey: '',
+      postCallbackRedirectUri: '/admin/piggy-banks',
+      postLogoutRedirectUri: '/admin',
+      pathnames: {
+        signIn: '/admin/sign-in',
+        signOut: '/admin/sign-out',
+        callback: '/admin/callback',
+      },
     },
   },
   experimental: {

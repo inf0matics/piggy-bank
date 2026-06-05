@@ -80,6 +80,30 @@ Create a `config.json` file. Example configuration:
 - Goto the users piggy bank
 - Print the page
 
+## Admin / Logto setup
+
+The admin area (`/admin`) is protected by [Logto](https://logto.io). The public
+landing page at `/admin` is always reachable; every other `/admin/**` route
+requires a Logto session.
+
+1. In the Logto Console, register a **Traditional Web App**.
+2. Configure its URIs (replace `<origin>` with your deployment URL, e.g.
+   `http://localhost:3000` in development):
+   - **Redirect URI**: `<origin>/admin/callback`
+   - **Post sign-out redirect URI**: `<origin>/admin`
+3. Copy the credentials into a `.env` file (see [`.env.example`](.env.example)):
+
+   ```ini
+   NUXT_LOGTO_ENDPOINT=https://<your-tenant>.logto.app/
+   NUXT_LOGTO_APP_ID=...
+   NUXT_LOGTO_APP_SECRET=...
+   NUXT_LOGTO_COOKIE_ENCRYPTION_KEY=...   # any random string
+   ```
+
+> [!NOTE]
+> Logto requires **server-side rendering**. Run the app with `nuxt build` (the
+> default Docker image), not the static `nuxt generate` output.
+
 ## Development Setup
 
 1. Install dependencies:
