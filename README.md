@@ -100,9 +100,15 @@ requires a Logto session.
    NUXT_LOGTO_COOKIE_ENCRYPTION_KEY=...   # any random string
    ```
 
-> [!NOTE]
+> [!IMPORTANT]
 > Logto requires **server-side rendering**. Run the app with `nuxt build` (the
 > default Docker image), not the static `nuxt generate` output.
+>
+> These env vars must be present in your deployment environment (e.g. the
+> container's `environment`). If you leave them unset the app still runs with
+> admin login disabled, but once `NUXT_LOGTO_ENDPOINT` is set you **must** also
+> set `NUXT_LOGTO_COOKIE_ENCRYPTION_KEY` to a real random secret — otherwise an
+> insecure built-in fallback key is used for the admin session cookie.
 
 ## Development Setup
 

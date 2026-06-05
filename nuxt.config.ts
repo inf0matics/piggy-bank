@@ -26,12 +26,21 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Logto admin authentication. Secrets are supplied via NUXT_LOGTO_* env
-    // vars (see .env.example), which override these empty placeholders.
+    // vars (see .env.example), which override these placeholders.
+    //
+    // When `endpoint` is empty, admin login is effectively disabled: the global
+    // Logto handler still runs on every request but only resolves the user as
+    // logged-out (no network call), so the core piggy-bank app keeps working.
+    //
+    // `cookieEncryptionKey` MUST be non-empty or @logto/node's CookieStorage
+    // throws on every request and takes down the whole site. The fallback below
+    // keeps the app up when admin auth is unconfigured; production deployments
+    // that enable Logto MUST override it via NUXT_LOGTO_COOKIE_ENCRYPTION_KEY.
     logto: {
       endpoint: '',
       appId: '',
       appSecret: '',
-      cookieEncryptionKey: '',
+      cookieEncryptionKey: 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY',
       postCallbackRedirectUri: '/admin/piggy-banks',
       postLogoutRedirectUri: '/admin',
       pathnames: {
