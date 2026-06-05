@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.7.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.5...v1.7.0)
+
+### 🚀 Enhancements
+
+- Add custodian teaser bar to PIN page ([08f5625](https://github.com/inf0matics/piggy-bank/commit/08f5625))
+- Add admin landing page, shell & Logto authentication ([5b913b2](https://github.com/inf0matics/piggy-bank/commit/5b913b2))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.6.5
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.4...v1.6.5)
