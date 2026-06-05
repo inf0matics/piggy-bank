@@ -26,6 +26,14 @@ services:
       KRAKEN_URL: http://lnbits-mock
       NUXT_HOST: '0.0.0.0'
       NUXT_PORT: '3000'
+      # Dummy Logto config so the global Logto handler runs without errors. No
+      # real tenant is reached: the admin landing page is public, and the
+      # protected-route test only exercises the unauthenticated (cookie-only)
+      # path, which never calls the Logto endpoint.
+      NUXT_LOGTO_ENDPOINT: https://logto.example.com/
+      NUXT_LOGTO_APP_ID: e2e-app-id
+      NUXT_LOGTO_APP_SECRET: e2e-app-secret
+      NUXT_LOGTO_COOKIE_ENCRYPTION_KEY: e2e-cookie-encryption-key
     volumes:
       - ./e2e/fixtures/config.test.json:/config/config.test.json:ro
     ports:
