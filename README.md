@@ -7,7 +7,7 @@
 A small piggy bank for pre-coiners, managed by their custodian.
 
 | **Homepage** | **Piggy Bank** | **Payment** |
-|---|---|---|
+| --- | --- | --- |
 | <img src="docs/img/homepage.png" alt="Homepage" height="250px"> | <img src="docs/img/piggy.png" alt="Piggy Bank" height="250px"> | <img src="docs/img/lnurlp.png" alt="Payment" height="250px"> |
 
 ## Features
@@ -19,17 +19,16 @@ A small piggy bank for pre-coiners, managed by their custodian.
 - **Automatic LNURL Recognition**: Reads and displays LNURL-pay extension links if configured.
 - **Dynamic Buttons**: Displays an `@ Address` button if a username is set in the extension.
 - **Popup Closure**: Automatically closes LNURL popups upon payment receipt.
-- **Print**: Print a users dashboard to have a give away QR Code
-- **OnChain Support**: Enable on-chain addresses.
+- **Print**: Print a user's dashboard to hand out as a give-away QR code.
+- **Admin Area**: Custodian admin panel at `/admin`, protected by Logto login.
 
 ## Roadmap
 
-- **OnChain XPUB Support**: Add on-chain XPUB support.
 - **Hardware Connectivity**: Integrate with a piggy bank hardware.
 
 ## Configuration
 
-Create a `config.json` file. Example configuration:
+Create a `config.json` file in the project root. Example:
 
 ```json
 {
@@ -42,73 +41,90 @@ Create a `config.json` file. Example configuration:
         "url": "https://your.lnbits.com",
         "invoiceKey": "6843498d6bbd4452b5853f7abdc3dac9"
       }
-      "onchain": [
-        "tb1qcgrvt4dsjf3shn4tpv0ntlkhzs7438cv46nmj6",
-        {
-          "label": "Card Wallet",
-          "address": "tb1q6eqjcwlslkkw4ucwle9gmvfgyc5g0xa6upnnwe"
-        }
-      ]
     }
-  ],
-  "electrumXServers": [
-    {
-      "server": "electrum.blockstream.info",
-      "port": 50002,
-      "protocolVersion": "1.4"
-    }, {
-      "server": "electrum.blockstream.info",
-      "port": 60002,
-      "protocolVersion": "1.4",
-      "isTestnet": true
-    }
-  ]    
+  ]
 }
 ```
 
-### OnChain Support
+Each user needs:
 
-* The onchain field is an array that can contain either individual addresses or labeled entries.
-* If you use onchain addresses, `electrumXServers` need to be configured
+- `id` — a unique, random string
+- `name` — display name
+- `accessKey` — the PIN entered on the keypad
+- `lnbits.url` + `lnbits.invoiceKey` — their LNBits instance and read-only invoice key
 
-> [!NOTE]
-> When running the project in development mode (`npm run dev`), it will use the **Bitcoin Testnet** by default.  
-> Ensure you are aware of this!
+The config path can be overridden with the `CONFIG_PATH` environment variable
+(useful when mounting the file into a container).
 
 ## Give away
 
-- Goto the users piggy bank
+- Go to the user's piggy bank
 - Print the page
 
 ## Admin / Logto setup
 
-The admin area (`/admin`) is protected by [Logto](https://logto.io). The public
-landing page at `/admin` is always reachable; every other `/admin/**` route
-requires a Logto session.
+The admin area lives at `/admin`. The landing page there is public; every other
+`/admin/**` route requires a [Logto](https://logto.io) session.
 
-1. In the Logto Console, register a **Traditional Web App**.
-2. Configure its URIs (replace `<origin>` with your deployment URL, e.g.
-   `http://localhost:3000` in development):
-   - **Redirect URI**: `<origin>/admin/callback`
-   - **Post sign-out redirect URI**: `<origin>/admin`
-3. Copy the credentials into a `.env` file (see [`.env.example`](.env.example)):
+### 1. Register the app in Logto
 
-   ```ini
-   NUXT_LOGTO_ENDPOINT=https://<your-tenant>.logto.app/
-   NUXT_LOGTO_APP_ID=...
-   NUXT_LOGTO_APP_SECRET=...
-   NUXT_LOGTO_COOKIE_ENCRYPTION_KEY=...   # any random string
-   ```
+In the Logto Console, register a **Traditional Web App** and set its URIs
+(replace `<origin>` with your deployment URL, e.g. `http://localhost:3000` in
+development):
+
+- **Redirect URI**: `<origin>/admin/callback`
+- **Post sign-out redirect URI**: `<origin>/admin`
+
+### 2. Provide the credentials
+
+The app reads these environment variables (see [`.env.example`](.env.example)):
+
+| Variable | Description |
+| --- | --- |
+| `NUXT_LOGTO_ENDPOINT` | Logto endpoint, e.g. `https://your-tenant.logto.app/` |
+| `NUXT_LOGTO_APP_ID` | App ID from the Logto Console |
+| `NUXT_LOGTO_APP_SECRET` | App secret from the Logto Console |
+| `NUXT_LOGTO_COOKIE_ENCRYPTION_KEY` | Random secret for the session cookie (e.g. `openssl rand -base64 32`) |
+
+**Local development** — put them in a `.env` file in the project root; `npm run
+dev` loads it automatically.
+
+**Production (Docker)** — a `.env` file is **not** read at runtime, and Docker
+Compose's own `.env` only does `${VAR}` substitution *inside* the compose file.
+You must pass the values into the container's environment. The simplest way is
+`env_file`:
+
+```yaml
+services:
+  piggybank:
+    image: your-image
+    env_file:
+      - .env          # path is relative to the compose file
+```
+
+Alternatively, list them explicitly under `environment:` (each `${VAR}` is then
+substituted from the compose-directory `.env`):
+
+```yaml
+    environment:
+      NUXT_LOGTO_ENDPOINT: ${NUXT_LOGTO_ENDPOINT}
+      NUXT_LOGTO_APP_ID: ${NUXT_LOGTO_APP_ID}
+      NUXT_LOGTO_APP_SECRET: ${NUXT_LOGTO_APP_SECRET}
+      NUXT_LOGTO_COOKIE_ENCRYPTION_KEY: ${NUXT_LOGTO_COOKIE_ENCRYPTION_KEY}
+```
+
+After recreating the container with `docker compose up -d`, confirm the values
+landed with `docker compose exec piggybank env | grep NUXT_LOGTO`, and check the
+startup logs for `[logto] Admin auth configured`.
 
 > [!IMPORTANT]
-> Logto requires **server-side rendering**. Run the app with `nuxt build` (the
-> default Docker image), not the static `nuxt generate` output.
+> Logto requires **server-side rendering** — run the SSR build (`nuxt build`,
+> the default Docker image), not the static `nuxt generate` output.
 >
-> These env vars must be present in your deployment environment (e.g. the
-> container's `environment`). If you leave them unset the app still runs with
-> admin login disabled, but once `NUXT_LOGTO_ENDPOINT` is set you **must** also
-> set `NUXT_LOGTO_COOKIE_ENCRYPTION_KEY` to a real random secret — otherwise an
-> insecure built-in fallback key is used for the admin session cookie.
+> If the Logto vars are unset the app still runs, with admin login disabled.
+> But once `NUXT_LOGTO_ENDPOINT` is set you **must** also provide a real
+> `NUXT_LOGTO_COOKIE_ENCRYPTION_KEY` — otherwise an insecure built-in fallback
+> key is used for the admin session cookie.
 
 ## Development Setup
 
