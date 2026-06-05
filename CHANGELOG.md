@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.7.1
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.7.0...v1.7.1)
+
+### 🩹 Fixes
+
+- Keep app running when Logto admin auth is unconfigured ([63805dd](https://github.com/inf0matics/piggy-bank/commit/63805dd))
+
+### ✅ Tests
+
+- **e2e:** Cover teaser bar & admin landing page ([f120703](https://github.com/inf0matics/piggy-bank/commit/f120703))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.7.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.6.5...v1.7.0)
