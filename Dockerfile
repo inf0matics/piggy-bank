@@ -35,9 +35,6 @@ ENV PORT=$PORT
 
 COPY --from=build /app/.output /app/.output
 COPY package.json /app
-# Standalone DB migration script (Node built-ins only) so it can be run inside
-# the container against the mounted DB volume.
-COPY scripts /app/scripts
 # Optional, only needed if you rely on unbundled dependencies
 # COPY --from=build /app/node_modules /app/node_modules
 

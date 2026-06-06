@@ -15,8 +15,8 @@ export const UserSchema = z.object({
 export type UserSchema = z.infer<typeof UserSchema>
 
 // SQLite schema for the user store. Keep in sync with the CREATE TABLE in
-// scripts/migrate-config-to-sqlite.mjs (the migration script is standalone and
-// cannot import this module).
+// e2e/seed-test-db.mjs (the e2e seeder is standalone and cannot import this
+// module).
 export const CREATE_USERS_TABLE = `
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,

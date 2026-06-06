@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { login } from './helpers/login'
 import { resetMock } from './helpers/mockControl'
 
-// Correct PIN comes from the test fixture (e2e/fixtures/config.test.json).
+// Correct PIN comes from the seeded test user (e2e/seed-test-db.mjs).
 const PIN = '0000'
 
 test.beforeEach(async () => {
