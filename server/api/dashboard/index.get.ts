@@ -1,5 +1,5 @@
 import z from 'zod'
-import type { UserSchema } from '~/server/domain/config'
+import type { UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits from '~/server/utils/LnBits'
 

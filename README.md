@@ -28,7 +28,41 @@ A small piggy bank for pre-coiners, managed by their custodian.
 
 ## Configuration
 
-Create a `config.json` file in the project root. Example:
+Users are stored in a **SQLite database**. Each user has:
+
+- `id` — a unique, random string
+- `name` — display name
+- `accessKey` — the PIN entered on the keypad
+- `lnbits.url` + `lnbits.invoiceKey` — their LNBits instance and read-only invoice key
+
+The database file location is set with the `DATABASE_PATH` environment variable
+(default: `data/piggy-bank.db`). In Docker, point it at a mounted volume so the
+data persists across restarts:
+
+```yaml
+services:
+  piggybank:
+    image: your-image
+    environment:
+      DATABASE_PATH: /data/piggy-bank.db
+    volumes:
+      - piggybank-data:/data
+
+volumes:
+  piggybank-data:
+```
+
+### Migrating from `config.json`
+
+Earlier versions read users from a `config.json` file. To import an existing
+config into the database, run the one-time migration script:
+
+```bash
+CONFIG_PATH=config.json DATABASE_PATH=data/piggy-bank.db npm run migrate:config
+```
+
+It reads the `users` array from `CONFIG_PATH` and upserts each into the DB at
+`DATABASE_PATH` (idempotent — safe to re-run). The expected `config.json` shape:
 
 ```json
 {
@@ -46,15 +80,8 @@ Create a `config.json` file in the project root. Example:
 }
 ```
 
-Each user needs:
-
-- `id` — a unique, random string
-- `name` — display name
-- `accessKey` — the PIN entered on the keypad
-- `lnbits.url` + `lnbits.invoiceKey` — their LNBits instance and read-only invoice key
-
-The config path can be overridden with the `CONFIG_PATH` environment variable
-(useful when mounting the file into a container).
+Inside Docker, run it against the mounted volume before (or alongside) starting
+the app, e.g. `docker compose run --rm piggybank npm run migrate:config`.
 
 ## Give away
 
@@ -134,13 +161,14 @@ startup logs for `[logto] Admin auth configured`.
    npm install
    ```
 
-2. Create and edit the configuration file:
+2. Seed a user into the database. Create a `config.json` (see the example
+   above) and import it:
 
    ```bash
-   nano config.json
+   npm run migrate:config
    ```
 
-   Copy the example configuration above and adjust the LNBits account details.
+   This writes the users into `data/piggy-bank.db`.
 
 3. Start the development server:
 

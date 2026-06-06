@@ -19,9 +19,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # Seed the SQLite store from the test fixture, then start the server. The
+    # app reads users from the DB (not config.json), so the migration must run
+    # before it serves. The DB lives on the container's ephemeral fs and is
+    # rebuilt on every `up --build`.
+    command: ['sh', '-c', 'node scripts/migrate-config-to-sqlite.mjs && node .output/server/index.mjs']
     environment:
-      # Override the config path so the app loads the test fixture.
+      # The migration script reads users from this fixture into the DB.
       CONFIG_PATH: /config/config.test.json
+      DATABASE_PATH: /app/data/piggy-bank-e2e.db
       # Point the BTC/EUR rate lookup at the mock so tests need no outbound internet.
       KRAKEN_URL: http://lnbits-mock
       NUXT_HOST: '0.0.0.0'

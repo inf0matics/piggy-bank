@@ -1,6 +1,6 @@
 import consola from 'consola'
 
 export default defineNitroPlugin(() => {
-  consola.info('Init Config')
-  useConfig()
+  consola.info('Init User Store')
+  initUserStore()
 })
