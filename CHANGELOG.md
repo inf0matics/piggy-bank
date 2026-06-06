@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v1.8.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.7.1...v1.8.0)
+
+### 🚀 Enhancements
+
+- Store users in SQLite instead of config.json ([5fa5229](https://github.com/inf0matics/piggy-bank/commit/5fa5229))
+
+### 📖 Documentation
+
+- Document Logto env injection for Docker; clean up README ([4dae85f](https://github.com/inf0matics/piggy-bank/commit/4dae85f))
+
+### 🏡 Chore
+
+- Gitignore .claude ([e1b8a84](https://github.com/inf0matics/piggy-bank/commit/e1b8a84))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.7.1
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.7.0...v1.7.1)
