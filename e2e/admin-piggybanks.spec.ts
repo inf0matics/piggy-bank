@@ -262,6 +262,10 @@ test('the sidebar User entry opens a user page with the account details', async 
   const card = page.getByTestId('user-account')
   await expect(card).toContainText('E2E Admin')
   await expect(card).toContainText('tsp.tools account')
+
+  // The ID is hidden until revealed.
+  await expect(card).not.toContainText('e2e-admin')
+  await card.getByRole('button', { name: 'Show ID' }).click()
   await expect(card).toContainText('e2e-admin')
 })
 

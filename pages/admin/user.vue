@@ -30,9 +30,19 @@
           <p class="text-xs font-medium text-[#3a6080] mb-1">
             ID
           </p>
-          <p class="font-mono text-sm text-text break-all">
-            {{ me.sub }}
-          </p>
+          <div class="flex items-center gap-2">
+            <p class="font-mono text-sm text-text break-all">
+              {{ revealed ? me.sub : '••••••••••••' }}
+            </p>
+            <button
+              type="button"
+              :aria-label="revealed ? 'Hide ID' : 'Show ID'"
+              class="flex items-center text-[#aac0d0] hover:text-dodgerblue-600 shrink-0"
+              @click="revealed = !revealed"
+            >
+              <UIcon :name="revealed ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
+            </button>
+          </div>
         </div>
       </section>
     </div>
@@ -47,4 +57,6 @@ definePageMeta({
 
 const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
+
+const revealed = ref(false)
 </script>
