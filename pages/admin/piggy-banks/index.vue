@@ -43,19 +43,6 @@
           </div>
         </div>
 
-        <div
-          :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
-          :aria-label="`LNURL-p ${pb.lnurlpActive ? 'active' : 'inactive'}`"
-          class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0"
-          :class="pb.lnurlpActive ? 'bg-[#e8f8ee] text-[#1a6b3a]' : 'bg-[#f1f1f1] text-[#888]'"
-        >
-          <span
-            class="w-1.5 h-1.5 rounded-full"
-            :class="pb.lnurlpActive ? 'bg-[#2d9e5a]' : 'bg-[#bbb]'"
-          />
-          LNURL-p
-        </div>
-
         <div class="flex items-center gap-1 bg-[#f7f9fb] border border-text/10 rounded-md px-2 py-1 shrink-0">
           <span class="font-mono text-xs tracking-widest min-w-9 text-center">
             {{ revealed.has(pb.id) ? pb.accessKey : '•'.repeat(pb.accessKey.length) }}
@@ -70,17 +57,35 @@
           </button>
         </div>
 
+        <div
+          :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
+          :aria-label="`LNURL-p ${pb.lnurlpActive ? 'active' : 'inactive'}`"
+          class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0"
+          :class="pb.lnurlpActive ? 'bg-[#e8f8ee] text-[#1a6b3a]' : 'bg-[#f1f1f1] text-[#888]'"
+        >
+          <span
+            class="w-1.5 h-1.5 rounded-full"
+            :class="pb.lnurlpActive ? 'bg-[#2d9e5a]' : 'bg-[#bbb]'"
+          />
+          LNURL-p
+        </div>
+
         <div class="flex items-center gap-1 shrink-0">
-          <button
-            v-if="pb.lnurlpActive"
-            type="button"
-            aria-label="Deposit"
-            title="Show deposit QR code"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-dodgerblue-700"
-            @click="openDeposit(pb)"
+          <UTooltip
+            :text="pb.lnurlpActive ? 'Show deposit QR code' : 'No LNURLp configured'"
+            :delay-duration="0"
           >
-            <UIcon name="i-tabler-qrcode" />
-          </button>
+            <button
+              type="button"
+              aria-label="Deposit"
+              :aria-disabled="!pb.lnurlpActive"
+              class="w-7 h-7 flex items-center justify-center rounded-md"
+              :class="pb.lnurlpActive ? 'text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-dodgerblue-700' : 'text-text/20 cursor-not-allowed'"
+              @click="pb.lnurlpActive && openDeposit(pb)"
+            >
+              <UIcon name="i-tabler-qrcode" />
+            </button>
+          </UTooltip>
           <button
             type="button"
             aria-label="Delete"

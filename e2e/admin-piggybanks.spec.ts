@@ -82,17 +82,26 @@ test('PIN is masked by default; the eye toggle reveals and re-hides it', async (
   await expect(pin).toHaveText('••••')
 })
 
-test('deposit: active rows show a deposit button that opens the payment QR', async ({ page }) => {
+test('deposit: active rows open the QR; inactive rows are disabled with a hint', async ({ page }) => {
   await page.goto('/admin/piggy-banks')
 
-  // Inactive LNURL-p row has no deposit button.
-  const inactive = page.locator('[data-testid="pb-row"]', { hasText: 'Nolnurlp' })
-  await expect(inactive.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
+  // Inactive LNURL-p row: deposit button present but disabled, with a tooltip.
+  const inactiveBtn = page.locator('[data-testid="pb-row"]', { hasText: 'Nolnurlp' })
+    .getByRole('button', { name: 'Deposit' })
+  await expect(inactiveBtn).toBeVisible()
+  await expect(inactiveBtn).toHaveAttribute('aria-disabled', 'true')
+  // The hint only renders once the tooltip opens on hover (reka renders the
+  // text twice — visible + screen-reader copy — so scope to the first).
+  await inactiveBtn.hover()
+  await expect(page.getByText('No LNURLp configured').first()).toBeAttached()
 
-  // Active row opens a dialog with a rendered QR code.
-  const active = page.locator('[data-testid="pb-row"]', { hasText: 'Test' })
-  await active.getByRole('button', { name: 'Deposit' }).click()
+  // Even forcing a click on the disabled button does not open the deposit dialog.
+  await inactiveBtn.click({ force: true })
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 
+  // Active row: opens a dialog with a rendered QR code.
+  await page.locator('[data-testid="pb-row"]', { hasText: 'Test' })
+    .getByRole('button', { name: 'Deposit' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toContainText('Deposit')
   await expect(dialog.locator('svg').first()).toBeVisible()
@@ -208,12 +217,14 @@ test('delete: trash opens a confirmation popup and confirming removes the row', 
   await expect(page.locator('[data-testid="pb-row"]', { hasText: 'DeleteMe' })).toHaveCount(0)
 })
 
-test('settings: the Logto account section shows the logged-in identity', async ({ page }) => {
+test('the sidebar User section shows the logged-in identity', async ({ page }) => {
   await page.goto('/admin/settings')
 
   const account = page.getByTestId('logto-account')
   await expect(account).toContainText('E2E Admin')
-  await expect(account).toContainText('e2e-admin')
+  await expect(account).toContainText('tsp.tools')
+  // The Logto user id (ownership key) is exposed via the title attribute.
+  await expect(account).toHaveAttribute('title', 'e2e-admin')
 })
 
 test('settings: a default LNBits URL persists and pre-fills the create form', async ({ page }) => {

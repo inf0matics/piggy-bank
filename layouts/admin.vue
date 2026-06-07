@@ -23,10 +23,31 @@
         </NuxtLink>
       </nav>
 
-      <div class="mt-auto px-4">
+      <div class="mt-auto px-3 pt-3">
+        <p class="px-1 mb-1 text-[10px] uppercase tracking-wide text-white/30">
+          User
+        </p>
+        <div
+          data-testid="logto-account"
+          :title="me?.sub"
+          class="flex items-center gap-2 px-1 mb-2"
+        >
+          <UIcon
+            name="i-tabler-user-circle"
+            class="text-2xl text-background-yellow/80 shrink-0"
+          />
+          <div class="min-w-0">
+            <p class="text-xs text-white/85 truncate">
+              {{ displayName }}
+            </p>
+            <p class="text-[10px] text-white/40 truncate">
+              tsp.tools account
+            </p>
+          </div>
+        </div>
         <a
           href="/admin/sign-out"
-          class="flex items-center gap-2 py-1.5 text-xs text-white/40 hover:text-white/70"
+          class="flex items-center gap-2 px-1 py-1.5 text-xs text-white/40 hover:text-white/70"
         >
           <UIcon
             name="i-tabler-logout"
@@ -48,4 +69,7 @@ const navItems = [
   { label: 'Piggy Banks', to: '/admin/piggy-banks', icon: 'i-tabler-pig-money' },
   { label: 'Settings', to: '/admin/settings', icon: 'i-tabler-settings' },
 ]
+
+const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
+const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
 </script>
