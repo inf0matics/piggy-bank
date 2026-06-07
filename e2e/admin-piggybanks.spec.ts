@@ -217,14 +217,19 @@ test('delete: trash opens a confirmation popup and confirming removes the row', 
   await expect(page.locator('[data-testid="pb-row"]', { hasText: 'DeleteMe' })).toHaveCount(0)
 })
 
-test('the sidebar User section shows the logged-in identity', async ({ page }) => {
-  await page.goto('/admin/settings')
+test('the sidebar User entry opens a user page with the account details', async ({ page }) => {
+  await page.goto('/admin/piggy-banks')
 
-  const account = page.getByTestId('logto-account')
-  await expect(account).toContainText('E2E Admin')
-  await expect(account).toContainText('tsp.tools')
-  // The Logto user id (ownership key) is exposed via the title attribute.
-  await expect(account).toHaveAttribute('title', 'e2e-admin')
+  const sidebarUser = page.getByTestId('logto-account')
+  await expect(sidebarUser).toContainText('E2E Admin')
+
+  await sidebarUser.click()
+  await page.waitForURL('**/admin/user')
+
+  const card = page.getByTestId('user-account')
+  await expect(card).toContainText('E2E Admin')
+  await expect(card).toContainText('tsp.tools account')
+  await expect(card).toContainText('e2e-admin')
 })
 
 test('settings: a default LNBits URL persists and pre-fills the create form', async ({ page }) => {

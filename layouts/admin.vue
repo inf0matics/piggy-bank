@@ -27,24 +27,19 @@
         <p class="px-1 mb-1 text-[10px] uppercase tracking-wide text-white/30">
           User
         </p>
-        <div
+        <NuxtLink
+          to="/admin/user"
           data-testid="logto-account"
-          :title="me?.sub"
-          class="flex items-center gap-2 px-1 mb-2"
+          class="flex items-center gap-2 px-1 py-1.5 mb-1 rounded-md hover:bg-white/8"
         >
           <UIcon
             name="i-tabler-user-circle"
             class="text-2xl text-background-yellow/80 shrink-0"
           />
-          <div class="min-w-0">
-            <p class="text-xs text-white/85 truncate">
-              {{ displayName }}
-            </p>
-            <p class="text-[10px] text-white/40 truncate">
-              tsp.tools account
-            </p>
-          </div>
-        </div>
+          <p class="min-w-0 text-xs text-white/85 truncate">
+            {{ displayName }}
+          </p>
+        </NuxtLink>
         <a
           href="/admin/sign-out"
           class="flex items-center gap-2 px-1 py-1.5 text-xs text-white/40 hover:text-white/70"
