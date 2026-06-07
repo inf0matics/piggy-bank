@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v1.10.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.9.0...v1.10.0)
+
+### 🚀 Enhancements
+
+- **admin:** Click row to edit, confirm before delete ([5443d94](https://github.com/inf0matics/piggy-bank/commit/5443d94))
+- **admin:** Per-custodian ownership + Logto identity in Settings ([4af6ba4](https://github.com/inf0matics/piggy-bank/commit/4af6ba4))
+- **admin:** Deposit QR, last-tx date, masked PIN in edit form ([29d1030](https://github.com/inf0matics/piggy-bank/commit/29d1030))
+- **admin:** Row layout tweaks + sidebar user section ([9720d5d](https://github.com/inf0matics/piggy-bank/commit/9720d5d))
+- **admin:** Clickable sidebar user → dedicated user page ([5f08722](https://github.com/inf0matics/piggy-bank/commit/5f08722))
+
+### 🩹 Fixes
+
+- **admin:** Scope the default LNBits URL setting per custodian ([c706e60](https://github.com/inf0matics/piggy-bank/commit/c706e60))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.9.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.8.0...v1.9.0)
