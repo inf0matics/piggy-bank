@@ -27,11 +27,14 @@
         data-testid="pb-row"
         class="flex items-center gap-3 bg-white rounded-[10px] border border-text/10 px-4 py-3 mb-2.5"
       >
-        <div class="flex-1 min-w-0 truncate">
-          <span class="font-medium text-sm">{{ pb.name }}</span>
+        <NuxtLink
+          :to="`/admin/piggy-banks/${pb.id}/edit`"
+          class="flex-1 min-w-0 truncate group"
+        >
+          <span class="font-medium text-sm group-hover:underline">{{ pb.name }}</span>
           <span class="text-[#aac0d0] mx-1">@</span>
-          <span class="text-sm text-[#7fa0b8]">{{ hostOf(pb.lnbitsUrl) }}</span>
-        </div>
+          <span class="text-sm text-[#7fa0b8] group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
+        </NuxtLink>
 
         <div
           :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
@@ -61,24 +64,47 @@
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
-          <NuxtLink
-            :to="`/admin/piggy-banks/${pb.id}/edit`"
-            aria-label="Edit"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-text"
-          >
-            <UIcon name="i-tabler-edit" />
-          </NuxtLink>
           <button
             type="button"
             aria-label="Delete"
             class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-text"
-            @click="remove(pb.id)"
+            @click="askDelete(pb)"
           >
             <UIcon name="i-tabler-trash" />
           </button>
         </div>
       </div>
     </div>
+
+    <UModal
+      v-model:open="confirmOpen"
+      title="Delete piggy bank"
+    >
+      <template #body>
+        <p class="text-sm text-text/80">
+          Are you sure? Do you want to delete
+          <span class="font-medium text-text">"{{ target?.name }}"</span>
+          connected to
+          <span class="font-medium text-text break-all">{{ target?.lnbitsUrl }}</span>?
+        </p>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            label="Cancel"
+            @click="confirmOpen = false"
+          />
+          <UButton
+            color="error"
+            label="Yes, delete"
+            :loading="deleting"
+            @click="confirmDelete"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -117,8 +143,24 @@ const hostOf = (url: string): string => {
   }
 }
 
-const remove = async (id: string) => {
-  await $fetch(`/api/admin/piggy-banks/${id}`, { method: 'DELETE' })
-  await refresh()
+const confirmOpen = ref(false)
+const target = ref<PiggyBankListItem | null>(null)
+const deleting = ref(false)
+
+const askDelete = (pb: PiggyBankListItem) => {
+  target.value = pb
+  confirmOpen.value = true
+}
+
+const confirmDelete = async () => {
+  if (!target.value) return
+  deleting.value = true
+  try {
+    await $fetch(`/api/admin/piggy-banks/${target.value.id}`, { method: 'DELETE' })
+    confirmOpen.value = false
+    await refresh()
+  } finally {
+    deleting.value = false
+  }
 }
 </script>

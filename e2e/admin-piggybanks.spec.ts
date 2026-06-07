@@ -105,7 +105,11 @@ test('edit: form is pre-filled and saving updates the row', async ({ page }) => 
     invoiceKey: 'test-invoice-key',
   })
 
-  await page.goto(`/admin/piggy-banks/${pb.id}/edit`)
+  // Clicking the "Name @ url" identity opens the edit form.
+  await page.goto('/admin/piggy-banks')
+  await page.locator('[data-testid="pb-row"]', { hasText: 'EditMe' }).getByText('EditMe').click()
+  await page.waitForURL(`**/admin/piggy-banks/${pb.id}/edit`)
+
   await expect(page.locator('#name')).toHaveValue('EditMe')
   await expect(page.locator('#accessKey')).toHaveValue('1357')
 
@@ -118,7 +122,7 @@ test('edit: form is pre-filled and saving updates the row', async ({ page }) => 
   await deletePiggyBank(page, pb.id)
 })
 
-test('delete: clicking delete removes the row', async ({ page }) => {
+test('delete: trash opens a confirmation popup and confirming removes the row', async ({ page }) => {
   await createPiggyBank(page, {
     name: 'DeleteMe',
     accessKey: '8642',
@@ -130,7 +134,20 @@ test('delete: clicking delete removes the row', async ({ page }) => {
   const row = page.locator('[data-testid="pb-row"]', { hasText: 'DeleteMe' })
   await expect(row).toBeVisible()
 
+  // Trash opens a confirmation dialog naming the piggy bank and its LNBits URL.
   await row.getByRole('button', { name: 'Delete' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toContainText('Are you sure?')
+  await expect(dialog).toContainText('DeleteMe')
+  await expect(dialog).toContainText('http://lnbits-mock')
+
+  // Cancel keeps the row.
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(row).toBeVisible()
+
+  // Confirming removes it.
+  await row.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Yes, delete' }).click()
   await expect(page.locator('[data-testid="pb-row"]', { hasText: 'DeleteMe' })).toHaveCount(0)
 })
 
