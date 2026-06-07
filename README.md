@@ -52,36 +52,18 @@ volumes:
   piggybank-data:
 ```
 
-### Migrating from `config.json`
-
-Earlier versions read users from a `config.json` file. To import an existing
-config into the database, run the one-time migration script:
+User management lives in the admin panel (see "Admin / Logto setup"). To add a
+user manually — handy for local development — insert a row directly:
 
 ```bash
-CONFIG_PATH=config.json DATABASE_PATH=data/piggy-bank.db npm run migrate:config
+DATABASE_PATH=data/piggy-bank.db node --input-type=module -e '
+import { DatabaseSync } from "node:sqlite";
+const db = new DatabaseSync(process.env.DATABASE_PATH);
+db.exec(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT NOT NULL, access_key TEXT NOT NULL UNIQUE, lnbits_url TEXT NOT NULL, lnbits_invoice_key TEXT NOT NULL)`);
+db.prepare(`INSERT OR REPLACE INTO users VALUES (?,?,?,?,?)`)
+  .run("john", "John Doe", "338", "https://your.lnbits.com", "your-invoice-key");
+'
 ```
-
-It reads the `users` array from `CONFIG_PATH` and upserts each into the DB at
-`DATABASE_PATH` (idempotent — safe to re-run). The expected `config.json` shape:
-
-```json
-{
-  "users": [
-    {
-      "id": "justARandomString",
-      "name": "John Doe",
-      "accessKey": "338",
-      "lnbits": {
-        "url": "https://your.lnbits.com",
-        "invoiceKey": "6843498d6bbd4452b5853f7abdc3dac9"
-      }
-    }
-  ]
-}
-```
-
-Inside Docker, run it against the mounted volume before (or alongside) starting
-the app, e.g. `docker compose run --rm piggybank npm run migrate:config`.
 
 ## Give away
 
@@ -161,14 +143,9 @@ startup logs for `[logto] Admin auth configured`.
    npm install
    ```
 
-2. Seed a user into the database. Create a `config.json` (see the example
-   above) and import it:
-
-   ```bash
-   npm run migrate:config
-   ```
-
-   This writes the users into `data/piggy-bank.db`.
+2. Add at least one user to the database (see the snippet in
+   [Configuration](#configuration)). The DB is created automatically on first run
+   at `data/piggy-bank.db`.
 
 3. Start the development server:
 
