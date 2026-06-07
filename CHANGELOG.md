@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v1.9.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.8.0...v1.9.0)
+
+### 🚀 Enhancements
+
+- Admin piggy bank management (CRUD + settings) ([1761e09](https://github.com/inf0matics/piggy-bank/commit/1761e09))
+- **admin:** Add dev-only "skip Logto" login shortcut ([42323aa](https://github.com/inf0matics/piggy-bank/commit/42323aa))
+
+### 📖 Documentation
+
+- Drop removed config.json migration from README ([54db18b](https://github.com/inf0matics/piggy-bank/commit/54db18b))
+
+### 🏡 Chore
+
+- Remove config.json migration tooling ([eeb2039](https://github.com/inf0matics/piggy-bank/commit/eeb2039))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.8.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.7.1...v1.8.0)
