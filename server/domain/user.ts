@@ -34,7 +34,8 @@ export const CREATE_USERS_TABLE = `
     name TEXT NOT NULL,
     access_key TEXT NOT NULL UNIQUE,
     lnbits_url TEXT NOT NULL,
-    lnbits_invoice_key TEXT NOT NULL
+    lnbits_invoice_key TEXT NOT NULL,
+    owner TEXT NOT NULL DEFAULT ''
   )
 `
 

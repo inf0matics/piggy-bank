@@ -17,19 +17,24 @@ db.exec(`
     name TEXT NOT NULL,
     access_key TEXT NOT NULL UNIQUE,
     lnbits_url TEXT NOT NULL,
-    lnbits_invoice_key TEXT NOT NULL
+    lnbits_invoice_key TEXT NOT NULL,
+    owner TEXT NOT NULL DEFAULT ''
   )
 `)
 const upsert = db.prepare(`
-  INSERT OR REPLACE INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT OR REPLACE INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key, owner)
+  VALUES (?, ?, ?, ?, ?, ?)
 `)
-// Primary login user — its mock wallet exposes an LNURL-p (status "active").
-upsert.run('test-user', 'Test', '0000', 'http://lnbits-mock', 'test-invoice-key')
+// Owner 'e2e-admin' matches the auth-shim identity, so these are visible in the
+// admin UI. Primary login user — its mock wallet exposes an LNURL-p ("active").
+upsert.run('test-user', 'Test', '0000', 'http://lnbits-mock', 'test-invoice-key', 'e2e-admin')
 // Second user whose invoice key makes the mock return no LNURL-p links, so the
 // admin list can assert the "inactive" badge. (See e2e/mocks/lnbits/server.mjs.)
 // PIN avoids 1111 — auth.spec.ts uses that as its "wrong PIN".
-upsert.run('no-lnurlp-user', 'Nolnurlp', '2222', 'http://lnbits-mock', 'no-lnurlp-key')
+upsert.run('no-lnurlp-user', 'Nolnurlp', '2222', 'http://lnbits-mock', 'no-lnurlp-key', 'e2e-admin')
+// Owned by a different custodian — must NOT appear in the e2e-admin's list
+// (proves per-custodian isolation). Still works for PIN login (login is global).
+upsert.run('other-owner-user', 'Foreign', '3333', 'http://lnbits-mock', 'test-invoice-key', 'other-custodian')
 db.close()
 
 console.log(`[e2e seed] test users ready in ${dbPath}`)

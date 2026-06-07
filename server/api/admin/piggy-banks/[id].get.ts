@@ -1,8 +1,8 @@
 export default defineEventHandler((event) => {
-  requireAdmin(event)
+  const admin = requireAdmin(event)
 
   const id = getRouterParam(event, 'id') as string
-  const user = getUserById(id)
+  const user = getOwnedUser(id, admin.sub)
   if (!user) {
     throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
   }

@@ -1,7 +1,7 @@
 import { UserInputSchema } from '~/server/domain/user'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  const admin = requireAdmin(event)
 
   const id = getRouterParam(event, 'id') as string
   const parsed = UserInputSchema.safeParse(await readBody(event))
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   let updated
   try {
-    updated = updateUser(id, parsed.data)
+    updated = updateOwnedUser(id, admin.sub, parsed.data)
   } catch (error) {
     if (String((error as Error)?.message).includes('UNIQUE')) {
       throw createError({ statusCode: 409, statusMessage: 'PIN is already in use' })

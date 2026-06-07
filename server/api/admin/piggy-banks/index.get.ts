@@ -3,9 +3,9 @@ import LnBits from '~/server/utils/LnBits'
 // Lists piggy banks with a live LNURL-p status per record. The status check is
 // best-effort: an unreachable LNBits or missing extension just reads "inactive".
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  const admin = requireAdmin(event)
 
-  const users = getAllUsers()
+  const users = getUsersByOwner(admin.sub)
 
   return Promise.all(users.map(async (user) => {
     let lnurlpActive = false

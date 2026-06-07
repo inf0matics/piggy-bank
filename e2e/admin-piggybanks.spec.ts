@@ -59,6 +59,14 @@ test('LNURL-p inactive badge is shown for a user without it', async ({ page }) =
   await expect(row.locator('[data-lnurlp="inactive"]')).toBeVisible()
 })
 
+test('piggy banks owned by another custodian are not listed', async ({ page }) => {
+  await page.goto('/admin/piggy-banks')
+
+  // "Foreign" (PIN 3333) is seeded with owner 'other-custodian'.
+  await expect(page.locator('[data-testid="pb-row"]', { hasText: 'Test' })).toBeVisible()
+  await expect(page.locator('[data-testid="pb-row"]', { hasText: 'Foreign' })).toHaveCount(0)
+})
+
 test('PIN is masked by default; the eye toggle reveals and re-hides it', async ({ page }) => {
   await page.goto('/admin/piggy-banks')
 
@@ -149,6 +157,14 @@ test('delete: trash opens a confirmation popup and confirming removes the row', 
   await row.getByRole('button', { name: 'Delete' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Yes, delete' }).click()
   await expect(page.locator('[data-testid="pb-row"]', { hasText: 'DeleteMe' })).toHaveCount(0)
+})
+
+test('settings: the Logto account section shows the logged-in identity', async ({ page }) => {
+  await page.goto('/admin/settings')
+
+  const account = page.getByTestId('logto-account')
+  await expect(account).toContainText('E2E Admin')
+  await expect(account).toContainText('e2e-admin')
 })
 
 test('settings: a default LNBits URL persists and pre-fills the create form', async ({ page }) => {

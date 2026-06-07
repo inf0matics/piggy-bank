@@ -41,6 +41,9 @@ export default defineNuxtConfig({
       appId: '',
       appSecret: '',
       cookieEncryptionKey: 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY',
+      // Request profile/email so the ID token carries name/username/email for the
+      // admin identity display (the `sub` claim, used for ownership, is always present).
+      scopes: ['profile', 'email'],
       postCallbackRedirectUri: '/admin/piggy-banks',
       postLogoutRedirectUri: '/admin',
       pathnames: {
