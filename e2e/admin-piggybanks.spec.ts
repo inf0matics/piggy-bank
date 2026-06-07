@@ -149,6 +149,31 @@ test('create: Add opens the form, default URL is pre-filled, submit adds a row',
   if (created) await deletePiggyBank(page, created.id)
 })
 
+test('test connection: reports connectivity and LNURL-p status', async ({ page }) => {
+  await page.goto('/admin/piggy-banks/new')
+  const url = page.locator('#lnbitsUrl')
+  const key = page.locator('#invoiceKey')
+  const testBtn = page.getByRole('button', { name: 'Test connection' })
+  const result = page.getByTestId('connection-result')
+
+  // Reachable wallet with an LNURL-p configured.
+  await url.fill('http://lnbits-mock')
+  await key.fill('test-invoice-key')
+  await testBtn.click()
+  await expect(result).toContainText('Connected')
+  await expect(result).toContainText('LNURL-p configured')
+
+  // Reachable wallet without an LNURL-p.
+  await key.fill('no-lnurlp-key')
+  await testBtn.click()
+  await expect(result).toContainText('No LNURL-p configured')
+
+  // Unreachable wallet.
+  await url.fill('http://does-not-exist.invalid')
+  await testBtn.click()
+  await expect(result).toContainText('Could not connect')
+})
+
 test('edit: form is pre-filled and saving updates the row', async ({ page }) => {
   const pb = await createPiggyBank(page, {
     name: 'EditMe',

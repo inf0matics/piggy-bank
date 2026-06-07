@@ -39,6 +39,34 @@
       </p>
     </div>
 
+    <div class="mb-4">
+      <button
+        type="button"
+        :disabled="testing"
+        class="inline-flex items-center gap-1.5 border border-dodgerblue-300 text-dodgerblue-700 hover:bg-dodgerblue-50 disabled:opacity-60 text-sm font-medium px-3 py-1.5 rounded-lg"
+        @click="testConnection"
+      >
+        <UIcon
+          :name="testing ? 'i-tabler-loader-2' : 'i-tabler-plug-connected'"
+          :class="{ 'animate-spin': testing }"
+        />
+        Test connection
+      </button>
+      <p
+        v-if="testResult"
+        data-testid="connection-result"
+        class="mt-2 text-sm"
+        :class="testResult.ok ? 'text-success' : 'text-error'"
+      >
+        <template v-if="testResult.ok">
+          ✓ Connected — {{ testResult.lnurlpActive ? 'LNURL-p configured' : 'No LNURL-p configured' }}
+        </template>
+        <template v-else>
+          ✗ {{ testResult.error }}
+        </template>
+      </p>
+    </div>
+
     <p
       v-if="error"
       class="text-sm text-error mb-3"
@@ -83,6 +111,35 @@ const form = reactive<PiggyBankFormValues>({ ...props.initial })
 const error = ref<string | null>(null)
 const submitting = ref(false)
 const revealed = reactive<Record<string, boolean>>({})
+
+interface ConnectionResult {
+  ok: boolean
+  lnurlpActive?: boolean
+  balanceSats?: number
+  error?: string
+}
+const testing = ref(false)
+const testResult = ref<ConnectionResult | null>(null)
+
+// Stale once the connection inputs change.
+watch(() => [form.lnbitsUrl, form.invoiceKey], () => {
+  testResult.value = null
+})
+
+const testConnection = async () => {
+  testing.value = true
+  testResult.value = null
+  try {
+    testResult.value = await $fetch<ConnectionResult>('/api/admin/piggy-banks/test-connection', {
+      method: 'POST',
+      body: { lnbitsUrl: form.lnbitsUrl, invoiceKey: form.invoiceKey },
+    })
+  } catch {
+    testResult.value = { ok: false, error: 'Test failed. Please try again.' }
+  } finally {
+    testing.value = false
+  }
+}
 
 const fields: Array<{ key: keyof PiggyBankFormValues, label: string, placeholder?: string, hint?: string, secret?: boolean }> = [
   { key: 'name', label: 'Name', placeholder: 'e.g. Anna' },
