@@ -94,6 +94,11 @@ const server = createServer(async (req, res) => {
       })
 
     case 'GET /lnurlp/api/v1/links':
+      // A specific invoice key always reports "no LNURL-p", so the admin list
+      // can exercise the inactive-badge path independent of global mock state.
+      if (req.headers['x-api-key'] === 'no-lnurlp-key') {
+        return send(res, 200, [])
+      }
       return send(res, 200, lnurlpLinks())
 
     case 'GET /api/v1/payments':

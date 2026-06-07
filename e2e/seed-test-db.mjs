@@ -20,10 +20,16 @@ db.exec(`
     lnbits_invoice_key TEXT NOT NULL
   )
 `)
-db.prepare(`
+const upsert = db.prepare(`
   INSERT OR REPLACE INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key)
   VALUES (?, ?, ?, ?, ?)
-`).run('test-user', 'Test', '0000', 'http://lnbits-mock', 'test-invoice-key')
+`)
+// Primary login user — its mock wallet exposes an LNURL-p (status "active").
+upsert.run('test-user', 'Test', '0000', 'http://lnbits-mock', 'test-invoice-key')
+// Second user whose invoice key makes the mock return no LNURL-p links, so the
+// admin list can assert the "inactive" badge. (See e2e/mocks/lnbits/server.mjs.)
+// PIN avoids 1111 — auth.spec.ts uses that as its "wrong PIN".
+upsert.run('no-lnurlp-user', 'Nolnurlp', '2222', 'http://lnbits-mock', 'no-lnurlp-key')
 db.close()
 
-console.log(`[e2e seed] test user ready in ${dbPath}`)
+console.log(`[e2e seed] test users ready in ${dbPath}`)

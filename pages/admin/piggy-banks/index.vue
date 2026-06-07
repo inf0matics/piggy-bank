@@ -1,0 +1,124 @@
+<template>
+  <div>
+    <header class="flex items-center justify-between bg-white px-7 py-4 border-b border-text/10">
+      <h1 class="font-heading font-medium text-xl">
+        Piggy Banks
+      </h1>
+      <NuxtLink
+        to="/admin/piggy-banks/new"
+        class="inline-flex items-center gap-1.5 bg-dodgerblue-600 hover:bg-dodgerblue-700 text-white font-heading font-medium text-sm px-4 py-1.5 rounded-lg"
+      >
+        <UIcon name="i-tabler-plus" />
+        Add piggy bank
+      </NuxtLink>
+    </header>
+
+    <div class="px-7 py-5">
+      <p
+        v-if="piggyBanks.length === 0"
+        class="text-text/55 text-sm"
+      >
+        No piggy banks yet. Click "Add piggy bank" to create one.
+      </p>
+
+      <div
+        v-for="pb in piggyBanks"
+        :key="pb.id"
+        data-testid="pb-row"
+        class="flex items-center gap-3 bg-white rounded-[10px] border border-text/10 px-4 py-3 mb-2.5"
+      >
+        <div class="flex-1 min-w-0 truncate">
+          <span class="font-medium text-sm">{{ pb.name }}</span>
+          <span class="text-[#aac0d0] mx-1">@</span>
+          <span class="text-sm text-[#7fa0b8]">{{ hostOf(pb.lnbitsUrl) }}</span>
+        </div>
+
+        <div
+          :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
+          :aria-label="`LNURL-p ${pb.lnurlpActive ? 'active' : 'inactive'}`"
+          class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0"
+          :class="pb.lnurlpActive ? 'bg-[#e8f8ee] text-[#1a6b3a]' : 'bg-[#f1f1f1] text-[#888]'"
+        >
+          <span
+            class="w-1.5 h-1.5 rounded-full"
+            :class="pb.lnurlpActive ? 'bg-[#2d9e5a]' : 'bg-[#bbb]'"
+          />
+          LNURL-p
+        </div>
+
+        <div class="flex items-center gap-1 bg-[#f7f9fb] border border-text/10 rounded-md px-2 py-1 shrink-0">
+          <span class="font-mono text-xs tracking-widest min-w-9 text-center">
+            {{ revealed.has(pb.id) ? pb.accessKey : '•'.repeat(pb.accessKey.length) }}
+          </span>
+          <button
+            type="button"
+            :aria-label="revealed.has(pb.id) ? 'Hide PIN' : 'Reveal PIN'"
+            class="flex items-center text-[#aac0d0] hover:text-dodgerblue-600"
+            @click="togglePin(pb.id)"
+          >
+            <UIcon :name="revealed.has(pb.id) ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <NuxtLink
+            :to="`/admin/piggy-banks/${pb.id}/edit`"
+            aria-label="Edit"
+            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-text"
+          >
+            <UIcon name="i-tabler-edit" />
+          </NuxtLink>
+          <button
+            type="button"
+            aria-label="Delete"
+            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-text"
+            @click="remove(pb.id)"
+          >
+            <UIcon name="i-tabler-trash" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+definePageMeta({
+  layout: 'admin',
+  middleware: 'admin-auth',
+})
+
+interface PiggyBankListItem {
+  id: string
+  name: string
+  accessKey: string
+  lnbitsUrl: string
+  lnurlpActive: boolean
+}
+
+const { data: piggyBanks, refresh } = await useFetch<PiggyBankListItem[]>('/api/admin/piggy-banks', {
+  default: () => [],
+})
+
+const revealed = reactive(new Set<string>())
+const togglePin = (id: string) => {
+  if (revealed.has(id)) {
+    revealed.delete(id)
+  } else {
+    revealed.add(id)
+  }
+}
+
+const hostOf = (url: string): string => {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
+
+const remove = async (id: string) => {
+  await $fetch(`/api/admin/piggy-banks/${id}`, { method: 'DELETE' })
+  await refresh()
+}
+</script>

@@ -49,6 +49,13 @@ export default defineNuxtConfig({
         callback: '/admin/callback',
       },
     },
+    public: {
+      // Admin auth mode. Empty = real Logto auth (production default). Set to
+      // 'e2e' via NUXT_PUBLIC_ADMIN_AUTH_MODE only in the e2e stack: an `e2e_admin`
+      // cookie then counts as an authenticated admin so the CRUD tests can run
+      // without a real Logto tenant. Never enable this in production.
+      adminAuthMode: '',
+    },
   },
   experimental: {
     appManifest: false,

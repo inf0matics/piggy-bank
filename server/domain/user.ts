@@ -14,6 +14,17 @@ export const UserSchema = z.object({
 
 export type UserSchema = z.infer<typeof UserSchema>
 
+// Fields the admin UI submits when creating/editing a piggy bank (no id — it is
+// generated on insert).
+export const UserInputSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required'),
+  accessKey: z.string().trim().min(1, 'PIN is required'),
+  lnbitsUrl: z.string().trim().url('A valid LNBits URL is required'),
+  invoiceKey: z.string().trim().min(1, 'Invoice key is required'),
+})
+
+export type UserInput = z.infer<typeof UserInputSchema>
+
 // SQLite schema for the user store. Keep in sync with the CREATE TABLE in
 // e2e/seed-test-db.mjs (the e2e seeder is standalone and cannot import this
 // module).
@@ -24,6 +35,14 @@ export const CREATE_USERS_TABLE = `
     access_key TEXT NOT NULL UNIQUE,
     lnbits_url TEXT NOT NULL,
     lnbits_invoice_key TEXT NOT NULL
+  )
+`
+
+// Key/value store for admin settings (e.g. the default LNBits URL).
+export const CREATE_SETTINGS_TABLE = `
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
   )
 `
 

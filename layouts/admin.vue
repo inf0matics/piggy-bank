@@ -1,47 +1,43 @@
 <template>
-  <div class="font-sans flex min-h-svh bg-background-yellow text-text">
-    <aside class="flex flex-col w-60 shrink-0 bg-white shadow-md">
-      <div class="px-5 py-6">
-        <div class="font-heading font-semibold text-2xl leading-none flex items-center gap-1">
-          <UIcon
-            name="i-uil-bitcoin"
-            class="text-3xl"
-          />Piggy Bank
-        </div>
-        <div class="font-heading text-dodgerblue-600 text-sm mt-1 ml-1">
-          Admin
+  <div class="font-sans flex min-h-svh text-text">
+    <aside class="flex flex-col w-50 shrink-0 bg-text py-5">
+      <div class="px-4 pb-4 mb-3 border-b border-background-yellow/20">
+        <div class="font-heading font-semibold text-xl text-background-yellow">
+          🐷 Piggy Admin
         </div>
       </div>
 
-      <nav class="flex flex-col gap-1 px-3 mt-2">
+      <nav class="flex flex-col">
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium hover:bg-dodgerblue-50"
-          active-class="bg-dodgerblue-50 text-dodgerblue-700"
+          class="flex items-center gap-2.5 px-4 py-2 text-sm text-white/55 border-l-2 border-transparent hover:text-white/80"
+          active-class="!text-white bg-white/8 !border-background-yellow"
         >
           <UIcon
             :name="item.icon"
-            class="text-lg"
+            class="text-base"
           />
           {{ item.label }}
         </NuxtLink>
       </nav>
 
-      <a
-        href="/admin/sign-out"
-        class="mt-auto m-3 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-text/70 hover:bg-dodgerblue-50"
-      >
-        <UIcon
-          name="i-tabler-logout"
-          class="text-lg"
-        />
-        Logout
-      </a>
+      <div class="mt-auto px-4">
+        <a
+          href="/admin/sign-out"
+          class="flex items-center gap-2 py-1.5 text-xs text-white/40 hover:text-white/70"
+        >
+          <UIcon
+            name="i-tabler-logout"
+            class="text-base"
+          />
+          Logout
+        </a>
+      </div>
     </aside>
 
-    <main class="flex-grow p-8">
+    <main class="flex-1 min-w-0 bg-[#f7f9fb]">
       <slot />
     </main>
   </div>
@@ -50,5 +46,6 @@
 <script setup lang="ts">
 const navItems = [
   { label: 'Piggy Banks', to: '/admin/piggy-banks', icon: 'i-tabler-pig-money' },
+  { label: 'Settings', to: '/admin/settings', icon: 'i-tabler-settings' },
 ]
 </script>

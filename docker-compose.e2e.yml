@@ -37,6 +37,9 @@ services:
       NUXT_LOGTO_APP_ID: e2e-app-id
       NUXT_LOGTO_APP_SECRET: e2e-app-secret
       NUXT_LOGTO_COOKIE_ENCRYPTION_KEY: e2e-cookie-encryption-key
+      # Enables the admin auth test shim: an `e2e_admin` cookie counts as an
+      # authenticated admin so the CRUD tests run without a real Logto tenant.
+      NUXT_PUBLIC_ADMIN_AUTH_MODE: e2e
     volumes:
       - ./e2e/seed-test-db.mjs:/seed.mjs:ro
     ports:
