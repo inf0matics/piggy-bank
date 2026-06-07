@@ -30,13 +30,26 @@
     </p>
 
     <!-- CTA -->
-    <a
-      href="/admin/sign-in"
-      class="inline-flex items-center gap-2 bg-dodgerblue-600 hover:bg-dodgerblue-700 text-white font-heading font-medium text-[17px] px-7 py-3 rounded-[10px] mb-8"
-    >
-      <UIcon name="i-tabler-login" />
-      Login as admin
-    </a>
+    <div class="flex flex-wrap items-center gap-3 mb-8">
+      <a
+        href="/admin/sign-in"
+        class="inline-flex items-center gap-2 bg-dodgerblue-600 hover:bg-dodgerblue-700 text-white font-heading font-medium text-[17px] px-7 py-3 rounded-[10px]"
+      >
+        <UIcon name="i-tabler-login" />
+        Login as admin
+      </a>
+      <!-- Dev-only shortcut: bypasses Logto via the e2e auth shim. Stripped from
+           production builds (import.meta.dev is false there). -->
+      <button
+        v-if="isDev"
+        type="button"
+        class="inline-flex items-center gap-2 border border-dashed border-dodgerblue-400 text-dodgerblue-700 hover:bg-dodgerblue-50 font-heading font-medium text-[15px] px-5 py-3 rounded-[10px]"
+        @click="devLogin"
+      >
+        <UIcon name="i-tabler-flask" />
+        Dev login (skip Logto)
+      </button>
+    </div>
 
     <hr class="border-t border-text/20 mb-6">
 
@@ -128,6 +141,15 @@
 </template>
 
 <script setup lang="ts">
+// Dev-only shortcut to enter the admin area without Logto. Sets the e2e auth
+// shim cookie, then hard-navigates so the cookie reaches the server. Only works
+// when the app runs with NUXT_PUBLIC_ADMIN_AUTH_MODE=e2e.
+const isDev = import.meta.dev
+const devLogin = () => {
+  document.cookie = 'e2e_admin=1; path=/'
+  window.location.href = '/admin/piggy-banks'
+}
+
 const features = [
   { icon: 'i-tabler-users', title: 'Manage accounts', desc: 'Add people, set their PIN, link their LNBits wallet' },
   { icon: 'i-tabler-plug', title: 'Check setup', desc: 'See if LNURL-p is active so others can send sats to them' },
