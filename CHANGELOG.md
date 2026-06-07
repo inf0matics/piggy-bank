@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v1.11.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.10.0...v1.11.0)
+
+### 🚀 Enhancements
+
+- **admin:** Test LNBits connection from the piggy bank form ([7110aa4](https://github.com/inf0matics/piggy-bank/commit/7110aa4))
+- **admin:** Hide the user ID behind a reveal toggle ([8a80448](https://github.com/inf0matics/piggy-bank/commit/8a80448))
+
+### 🏡 Chore
+
+- **admin:** Label the user ID as "tsp.tools ID" ([2f60e9c](https://github.com/inf0matics/piggy-bank/commit/2f60e9c))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.10.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.9.0...v1.10.0)
