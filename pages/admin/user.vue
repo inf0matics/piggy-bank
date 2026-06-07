@@ -28,7 +28,7 @@
 
         <div v-if="me?.sub">
           <p class="text-xs font-medium text-[#3a6080] mb-1">
-            ID
+            tsp.tools ID
           </p>
           <div class="flex items-center gap-2">
             <p class="font-mono text-sm text-text break-all">
