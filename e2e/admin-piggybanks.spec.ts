@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { resetMock } from './helpers/mockControl'
+import { resetMock, triggerPayment } from './helpers/mockControl'
 
 // Authenticated admin tests. The app runs with NUXT_PUBLIC_ADMIN_AUTH_MODE=e2e
 // (see docker-compose.e2e.yml), so an `e2e_admin` cookie counts as a logged-in
@@ -82,6 +82,33 @@ test('PIN is masked by default; the eye toggle reveals and re-hides it', async (
   await expect(pin).toHaveText('••••')
 })
 
+test('deposit: active rows show a deposit button that opens the payment QR', async ({ page }) => {
+  await page.goto('/admin/piggy-banks')
+
+  // Inactive LNURL-p row has no deposit button.
+  const inactive = page.locator('[data-testid="pb-row"]', { hasText: 'Nolnurlp' })
+  await expect(inactive.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
+
+  // Active row opens a dialog with a rendered QR code.
+  const active = page.locator('[data-testid="pb-row"]', { hasText: 'Test' })
+  await active.getByRole('button', { name: 'Deposit' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toContainText('Deposit')
+  await expect(dialog.locator('svg').first()).toBeVisible()
+})
+
+test('list: shows the last transaction date once a payment exists', async ({ page }) => {
+  await page.goto('/admin/piggy-banks')
+  // No payments yet after resetMock.
+  const row = page.locator('[data-testid="pb-row"]', { hasText: 'Test' })
+  await expect(row).toContainText('No transactions yet')
+
+  await triggerPayment(2100)
+  await page.reload()
+  await expect(row).toContainText('Last tx')
+})
+
 test('create: Add opens the form, default URL is pre-filled, submit adds a row', async ({ page }) => {
   // Ensure a known default LNBits URL is configured.
   await page.request.put('/api/admin/settings', { data: { defaultLnbitsUrl: 'http://lnbits-mock' } })
@@ -126,6 +153,28 @@ test('edit: form is pre-filled and saving updates the row', async ({ page }) => 
 
   await page.waitForURL(url => url.pathname === '/admin/piggy-banks')
   await expect(page.locator('[data-testid="pb-row"]', { hasText: 'Edited' })).toBeVisible()
+
+  await deletePiggyBank(page, pb.id)
+})
+
+test('edit: the PIN field is masked with a reveal toggle', async ({ page }) => {
+  const pb = await createPiggyBank(page, {
+    name: 'SecretPin',
+    accessKey: '4680',
+    lnbitsUrl: 'http://lnbits-mock',
+    invoiceKey: 'test-invoice-key',
+  })
+
+  await page.goto(`/admin/piggy-banks/${pb.id}/edit`)
+  const pin = page.locator('#accessKey')
+  await expect(pin).toHaveAttribute('type', 'password')
+
+  await page.getByRole('button', { name: 'Reveal PIN' }).click()
+  await expect(pin).toHaveAttribute('type', 'text')
+  await expect(pin).toHaveValue('4680')
+
+  await page.getByRole('button', { name: 'Hide PIN' }).click()
+  await expect(pin).toHaveAttribute('type', 'password')
 
   await deletePiggyBank(page, pb.id)
 })

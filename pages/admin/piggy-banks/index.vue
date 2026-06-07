@@ -27,14 +27,21 @@
         data-testid="pb-row"
         class="flex items-center gap-3 bg-white rounded-[10px] border border-text/10 px-4 py-3 mb-2.5"
       >
-        <NuxtLink
-          :to="`/admin/piggy-banks/${pb.id}/edit`"
-          class="flex-1 min-w-0 truncate group"
-        >
-          <span class="font-medium text-sm group-hover:underline">{{ pb.name }}</span>
-          <span class="text-[#aac0d0] mx-1">@</span>
-          <span class="text-sm text-[#7fa0b8] group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
-        </NuxtLink>
+        <div class="flex-1 min-w-0">
+          <NuxtLink
+            :to="`/admin/piggy-banks/${pb.id}/edit`"
+            class="block truncate group"
+          >
+            <span class="font-medium text-sm group-hover:underline">{{ pb.name }}</span>
+            <span class="text-[#aac0d0] mx-1">@</span>
+            <span class="text-sm text-[#7fa0b8] group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
+          </NuxtLink>
+          <div class="flex items-center gap-1 mt-0.5 text-[11px] text-[#aac0d0]">
+            <UIcon name="i-tabler-clock" />
+            <span v-if="pb.lastPaymentTime">Last tx {{ formatTime(pb.lastPaymentTime) }}</span>
+            <span v-else>No transactions yet</span>
+          </div>
+        </div>
 
         <div
           :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
@@ -64,6 +71,16 @@
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
+          <button
+            v-if="pb.lnurlpActive"
+            type="button"
+            aria-label="Deposit"
+            title="Show deposit QR code"
+            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-dodgerblue-700"
+            @click="openDeposit(pb)"
+          >
+            <UIcon name="i-tabler-qrcode" />
+          </button>
           <button
             type="button"
             aria-label="Delete"
@@ -105,6 +122,17 @@
         </div>
       </template>
     </UModal>
+
+    <UModal v-model:open="depositOpen">
+      <template #content>
+        <InfoBoxPopupContent
+          :key="depositTarget?.id"
+          :lnurl="depositTarget?.lnurl ?? ''"
+          :address="depositTarget?.address ?? ''"
+          @close="depositOpen = false"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -120,6 +148,9 @@ interface PiggyBankListItem {
   accessKey: string
   lnbitsUrl: string
   lnurlpActive: boolean
+  lnurl: string | null
+  address: string | null
+  lastPaymentTime: number | null
 }
 
 const { data: piggyBanks, refresh } = await useFetch<PiggyBankListItem[]>('/api/admin/piggy-banks', {
@@ -141,6 +172,13 @@ const hostOf = (url: string): string => {
   } catch {
     return url
   }
+}
+
+const depositOpen = ref(false)
+const depositTarget = ref<PiggyBankListItem | null>(null)
+const openDeposit = (pb: PiggyBankListItem) => {
+  depositTarget.value = pb
+  depositOpen.value = true
 }
 
 const confirmOpen = ref(false)

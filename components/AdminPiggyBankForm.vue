@@ -12,13 +12,25 @@
         :for="field.key"
         class="block text-xs font-medium text-[#3a6080] mb-1.5"
       >{{ field.label }}</label>
-      <input
-        :id="field.key"
-        v-model="form[field.key]"
-        :type="field.type"
-        :placeholder="field.placeholder"
-        class="w-full px-3 py-2 border border-text/20 rounded-lg text-sm bg-[#f7f9fb] text-text"
-      >
+      <div class="relative">
+        <input
+          :id="field.key"
+          v-model="form[field.key]"
+          :type="field.secret && !revealed[field.key] ? 'password' : 'text'"
+          :placeholder="field.placeholder"
+          class="w-full px-3 py-2 border border-text/20 rounded-lg text-sm bg-[#f7f9fb] text-text"
+          :class="{ 'pr-9': field.secret }"
+        >
+        <button
+          v-if="field.secret"
+          type="button"
+          :aria-label="`${revealed[field.key] ? 'Hide' : 'Reveal'} ${field.label}`"
+          class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-[#aac0d0] hover:text-dodgerblue-600"
+          @click="revealed[field.key] = !revealed[field.key]"
+        >
+          <UIcon :name="revealed[field.key] ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
+        </button>
+      </div>
       <p
         v-if="field.hint"
         class="text-[11px] text-[#7fa0b8] mt-1.5"
@@ -70,12 +82,13 @@ const props = defineProps<{
 const form = reactive<PiggyBankFormValues>({ ...props.initial })
 const error = ref<string | null>(null)
 const submitting = ref(false)
+const revealed = reactive<Record<string, boolean>>({})
 
-const fields: Array<{ key: keyof PiggyBankFormValues, label: string, type: string, placeholder?: string, hint?: string }> = [
-  { key: 'name', label: 'Name', type: 'text', placeholder: 'e.g. Anna' },
-  { key: 'accessKey', label: 'PIN', type: 'text', placeholder: 'Login PIN' },
-  { key: 'lnbitsUrl', label: 'LNBits URL', type: 'text', placeholder: 'https://your-lnbits.com' },
-  { key: 'invoiceKey', label: 'LNBits invoice key', type: 'text', placeholder: 'Invoice / read key' },
+const fields: Array<{ key: keyof PiggyBankFormValues, label: string, placeholder?: string, hint?: string, secret?: boolean }> = [
+  { key: 'name', label: 'Name', placeholder: 'e.g. Anna' },
+  { key: 'accessKey', label: 'PIN', placeholder: 'Login PIN', secret: true },
+  { key: 'lnbitsUrl', label: 'LNBits URL', placeholder: 'https://your-lnbits.com' },
+  { key: 'invoiceKey', label: 'LNBits invoice key', placeholder: 'Invoice / read key' },
 ]
 
 const onSubmit = async () => {
