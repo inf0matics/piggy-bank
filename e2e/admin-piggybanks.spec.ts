@@ -118,6 +118,14 @@ test('list: shows the last transaction date once a payment exists', async ({ pag
   await expect(row).toContainText('Last tx')
 })
 
+// Runs before any settings save in this file, so the seeded un-scoped
+// 'default_lnbits_url' value is still present — the per-custodian read must
+// not surface it. (Guards against regressing to a global setting.)
+test('settings: a default from outside this custodian is not shown', async ({ page }) => {
+  await page.goto('/admin/settings')
+  await expect(page.locator('#default-lnbits-url')).not.toHaveValue('http://foreign-default.example')
+})
+
 test('create: Add opens the form, default URL is pre-filled, submit adds a row', async ({ page }) => {
   // Ensure a known default LNBits URL is configured.
   await page.request.put('/api/admin/settings', { data: { defaultLnbitsUrl: 'http://lnbits-mock' } })

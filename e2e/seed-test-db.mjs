@@ -35,6 +35,14 @@ upsert.run('no-lnurlp-user', 'Nolnurlp', '2222', 'http://lnbits-mock', 'no-lnurl
 // Owned by a different custodian — must NOT appear in the e2e-admin's list
 // (proves per-custodian isolation). Still works for PIN login (login is global).
 upsert.run('other-owner-user', 'Foreign', '3333', 'http://lnbits-mock', 'test-invoice-key', 'other-custodian')
+
+// A default-LNBits-URL under the un-scoped key. Settings are now per-custodian
+// (key `default_lnbits_url:<sub>`), so the e2e-admin must NOT see this value —
+// it guards against regressing to a global setting.
+db.exec(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`)
+db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+  .run('default_lnbits_url', 'http://foreign-default.example')
+
 db.close()
 
 console.log(`[e2e seed] test users ready in ${dbPath}`)
