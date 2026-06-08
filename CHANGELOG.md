@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.13.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.12.0...v1.13.0)
+
+### 🚀 Enhancements
+
+- **admin:** Link the piggy logo to home and add footer GitHub link + version ([d58d05a](https://github.com/inf0matics/piggy-bank/commit/d58d05a))
+
+### 🏡 Chore
+
+- **dev:** Add docker-compose.dev.yml with LNBits mock and seeded data ([a11bfa2](https://github.com/inf0matics/piggy-bank/commit/a11bfa2))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.12.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.11.0...v1.12.0)
