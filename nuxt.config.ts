@@ -43,7 +43,9 @@ export default defineNuxtConfig({
       cookieEncryptionKey: 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY',
       // Request profile/email so the ID token carries name/username/email for the
       // admin identity display (the `sub` claim, used for ownership, is always present).
-      scopes: ['profile', 'email'],
+      // `identities` lets the userinfo endpoint return the user's social-connector
+      // identities (e.g. LNURL-auth), surfaced on the /admin/user page.
+      scopes: ['profile', 'email', 'identities'],
       postCallbackRedirectUri: '/admin/piggy-banks',
       postLogoutRedirectUri: '/admin',
       pathnames: {

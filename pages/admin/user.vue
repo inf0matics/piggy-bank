@@ -44,6 +44,33 @@
             </button>
           </div>
         </div>
+
+        <div
+          v-if="me?.lnurlAuth"
+          data-testid="lnurl-auth-status"
+          class="flex items-center gap-2 mt-5 text-sm text-text"
+        >
+          <UIcon
+            name="i-tabler-bolt"
+            class="text-base text-dodgerblue-600 shrink-0"
+          />
+          <span>Connected via <strong class="font-medium">LNURL-auth</strong></span>
+        </div>
+
+        <a
+          v-if="me?.accountCenterUrl"
+          :href="me.accountCenterUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="account-center-link"
+          class="inline-flex items-center gap-1.5 mt-5 text-sm font-medium text-dodgerblue-700 hover:underline"
+        >
+          Manage account in LogTo
+          <UIcon
+            name="i-tabler-external-link"
+            class="text-base shrink-0"
+          />
+        </a>
       </section>
     </div>
   </div>
@@ -55,7 +82,14 @@ definePageMeta({
   middleware: 'admin-auth',
 })
 
-const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
+const { data: me } = await useFetch<{
+  sub: string
+  name?: string
+  username?: string
+  email?: string
+  accountCenterUrl: string | null
+  lnurlAuth: boolean | null
+}>('/api/admin/me')
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
 
 const revealed = ref(false)
