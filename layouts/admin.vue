@@ -3,7 +3,12 @@
     <aside class="flex flex-col w-50 shrink-0 bg-text py-5">
       <div class="px-4 pb-4 mb-3 border-b border-background-yellow/20">
         <div class="font-heading font-semibold text-xl text-background-yellow">
-          🐷 Piggy Admin
+          <NuxtLink
+            to="/"
+            aria-label="Back to Piggy Bank"
+            title="Back to Piggy Bank"
+            class="hover:opacity-80"
+          >🐷</NuxtLink> Piggy Admin
         </div>
       </div>
 
@@ -50,6 +55,34 @@
           />
           Logout
         </a>
+
+        <div class="flex items-center gap-1.5 px-1 pt-2.5 mt-2 border-t border-white/10 text-xs text-white/40">
+          <a
+            v-if="githubLink"
+            :href="githubLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 hover:text-white/70"
+          >
+            <UIcon name="i-grommet-icons-github" />
+            GitHub
+          </a>
+          <a
+            v-if="versionLink"
+            :href="versionLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="ml-auto rounded-full border border-white/20 px-2 py-0.5 hover:text-white/70 hover:border-white/40"
+          >
+            {{ version }}
+          </a>
+          <span
+            v-else-if="version"
+            class="ml-auto rounded-full border border-white/20 px-2 py-0.5"
+          >
+            {{ version }}
+          </span>
+        </div>
       </div>
     </aside>
 
@@ -67,4 +100,19 @@ const navItems = [
 
 const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
+
+// GitHub link + version, sourced from the same @thespielplatz/nuxt-dev-base
+// runtime config the site footer (FooterGithubLink/FooterVersionBadge) uses.
+const devBase = useRuntimeConfig().public.devBase as {
+  githubLink?: string
+  version?: string
+  releasedVersion?: string
+}
+const githubLink = devBase.githubLink
+const version = devBase.version ? `v${devBase.version}` : undefined
+const versionLink = computed(() =>
+  githubLink && devBase.releasedVersion
+    ? `${githubLink}/releases/tag/v${devBase.releasedVersion}`
+    : undefined,
+)
 </script>
