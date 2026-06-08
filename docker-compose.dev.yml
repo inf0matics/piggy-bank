@@ -1,0 +1,65 @@
+# Dev stack: the piggybank app in `nuxt dev` (hot reload) + the LNBits mock,
+# pre-seeded so you can just look at and click through the running app.
+#
+#   docker compose -f docker-compose.dev.yml up
+#
+# Then: http://localhost:3000/admin -> "Dev login (skip Logto)" -> the admin
+# area shows the seeded piggy banks (Alice/Bob active, Carol inactive) with live
+# balance/LNURL-p from the mock, and /admin/user shows the LogTo account link.
+#
+# Runs `nuxt dev` (NOT the production build) on purpose: the "Dev login (skip
+# Logto)" button only renders when import.meta.dev is true. The repo is
+# bind-mounted, so host edits hot-reload in the container.
+services:
+  lnbits-mock:
+    build:
+      context: ./e2e/mocks/lnbits
+    # Serves on :80 inside the network (app reaches it at http://lnbits-mock).
+    # Host port 5001 is mapped so you can drive the control API while testing,
+    # e.g. POST http://localhost:5001/test/payment {"sats":2100}.
+    ports:
+      - '5001:80'
+
+  piggybank:
+    image: node:24-slim
+    working_dir: /app
+    # Install deps, seed the dev DB, then start the dev server bound to 0.0.0.0
+    # so it is reachable from the host.
+    command:
+      - sh
+      - -c
+      # --no-package-lock: deps install into the node_modules volume without
+      # rewriting the bind-mounted package-lock.json on the host.
+      - 'npm install --no-package-lock && node dev/seed-dev-db.mjs && npm run dev -- --host 0.0.0.0 --port 3000'
+    environment:
+      DATABASE_PATH: /app/data/piggy-bank-dev.db
+      # Point the BTC/EUR rate lookup at the mock so no outbound internet is needed.
+      KRAKEN_URL: http://lnbits-mock
+      # Enables the "Dev login (skip Logto)" shim: an `e2e_admin` cookie counts
+      # as an authenticated admin (owner of the seeded piggy banks).
+      NUXT_PUBLIC_ADMIN_AUTH_MODE: e2e
+      # A real endpoint so the /admin/user account-center link renders
+      # (https://logto.tsp.tools/account/security). No tenant is contacted under
+      # dev-login. Replace with your own tenant + app id/secret to test real login.
+      NUXT_LOGTO_ENDPOINT: https://logto.tsp.tools/
+      NUXT_LOGTO_COOKIE_ENCRYPTION_KEY: dev-cookie-encryption-key
+      # Bind-mounted source on macOS needs polling for reliable file watching.
+      CHOKIDAR_USEPOLLING: 'true'
+      WATCHPACK_POLLING: 'true'
+    volumes:
+      # Bind the repo for hot reload; keep node_modules and .nuxt in container-
+      # local volumes so the host's (arm64 / different) copies don't leak in.
+      - .:/app
+      - piggybank_node_modules:/app/node_modules
+      - piggybank_nuxt:/app/.nuxt
+    ports:
+      - '3000:3000'
+      # Vite HMR websocket.
+      - '24678:24678'
+    depends_on:
+      lnbits-mock:
+        condition: service_healthy
+
+volumes:
+  piggybank_node_modules:
+  piggybank_nuxt:
