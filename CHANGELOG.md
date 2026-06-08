@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.12.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.11.0...v1.12.0)
+
+### 🚀 Enhancements
+
+- **admin:** Show LogTo account link and LNURL-auth status on user page ([11c93a0](https://github.com/inf0matics/piggy-bank/commit/11c93a0))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.11.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.10.0...v1.11.0)
