@@ -1,6 +1,6 @@
 <template>
   <form
-    class="bg-white rounded-[10px] border border-text/10 p-6 max-w-[480px]"
+    class="bg-elevated rounded-[10px] border border-default p-6 max-w-[480px]"
     @submit.prevent="onSubmit"
   >
     <div
@@ -10,7 +10,7 @@
     >
       <label
         :for="field.key"
-        class="block text-xs font-medium text-[#3a6080] mb-1.5"
+        class="block text-xs font-bold text-muted mb-1.5"
       >{{ field.label }}</label>
       <div class="relative">
         <input
@@ -18,14 +18,14 @@
           v-model="form[field.key]"
           :type="field.secret && !revealed[field.key] ? 'password' : 'text'"
           :placeholder="field.placeholder"
-          class="w-full px-3 py-2 border border-text/20 rounded-lg text-sm bg-[#f7f9fb] text-text"
+          class="w-full px-3 py-2 border border-default rounded-lg text-sm bg-default text-default focus:outline-none focus:border-primary"
           :class="{ 'pr-9': field.secret }"
         >
         <button
           v-if="field.secret"
           type="button"
           :aria-label="`${revealed[field.key] ? 'Hide' : 'Reveal'} ${field.label}`"
-          class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-[#aac0d0] hover:text-dodgerblue-600"
+          class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-dimmed hover:text-primary"
           @click="revealed[field.key] = !revealed[field.key]"
         >
           <UIcon :name="revealed[field.key] ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
@@ -33,7 +33,7 @@
       </div>
       <p
         v-if="field.hint"
-        class="text-[11px] text-[#7fa0b8] mt-1.5"
+        class="text-[11px] text-muted mt-1.5"
       >
         {{ field.hint }}
       </p>
@@ -43,7 +43,7 @@
       <button
         type="button"
         :disabled="testing"
-        class="inline-flex items-center gap-1.5 border border-dodgerblue-300 text-dodgerblue-700 hover:bg-dodgerblue-50 disabled:opacity-60 text-sm font-medium px-3 py-1.5 rounded-lg"
+        class="inline-flex items-center gap-1.5 border border-primary/60 text-primary hover:bg-primary/10 disabled:opacity-60 text-sm font-bold px-3 py-1.5 rounded-lg"
         @click="testConnection"
       >
         <UIcon
@@ -78,14 +78,14 @@
       <button
         type="submit"
         :disabled="submitting"
-        class="inline-flex items-center gap-1.5 bg-dodgerblue-600 hover:bg-dodgerblue-700 disabled:opacity-60 text-white font-heading font-medium text-sm px-4 py-1.5 rounded-lg"
+        class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-600 disabled:opacity-60 text-inverted font-bold text-sm px-4 py-1.5 rounded-lg"
       >
         <UIcon name="i-tabler-device-floppy" />
         {{ submitLabel }}
       </button>
       <NuxtLink
         to="/admin/piggy-banks"
-        class="text-sm text-text/60 hover:text-text"
+        class="text-sm text-muted hover:text-highlighted"
       >
         Cancel
       </NuxtLink>

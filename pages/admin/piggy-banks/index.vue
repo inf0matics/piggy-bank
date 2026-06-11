@@ -1,12 +1,12 @@
 <template>
   <div>
-    <header class="flex items-center justify-between bg-white px-7 py-4 border-b border-text/10">
-      <h1 class="font-heading font-medium text-xl">
+    <header class="flex items-center justify-between bg-elevated px-7 py-4 border-b border-default">
+      <h1 class="font-bold text-xl text-highlighted">
         Piggy Banks
       </h1>
       <NuxtLink
         to="/admin/piggy-banks/new"
-        class="inline-flex items-center gap-1.5 bg-dodgerblue-600 hover:bg-dodgerblue-700 text-white font-heading font-medium text-sm px-4 py-1.5 rounded-lg"
+        class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-600 text-inverted font-bold text-sm px-4 py-1.5 rounded-lg"
       >
         <UIcon name="i-tabler-plus" />
         Add piggy bank
@@ -16,7 +16,7 @@
     <div class="px-7 py-5">
       <p
         v-if="piggyBanks.length === 0"
-        class="text-text/55 text-sm"
+        class="text-muted text-sm"
       >
         No piggy banks yet. Click "Add piggy bank" to create one.
       </p>
@@ -25,32 +25,32 @@
         v-for="pb in piggyBanks"
         :key="pb.id"
         data-testid="pb-row"
-        class="flex items-center gap-3 bg-white rounded-[10px] border border-text/10 px-4 py-3 mb-2.5"
+        class="flex items-center gap-3 bg-elevated rounded-[10px] border border-default px-4 py-3 mb-2.5"
       >
         <div class="flex-1 min-w-0">
           <NuxtLink
             :to="`/admin/piggy-banks/${pb.id}/edit`"
             class="block truncate group"
           >
-            <span class="font-medium text-sm group-hover:underline">{{ pb.name }}</span>
-            <span class="text-[#aac0d0] mx-1">@</span>
-            <span class="text-sm text-[#7fa0b8] group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
+            <span class="font-bold text-sm text-highlighted group-hover:underline">{{ pb.name }}</span>
+            <span class="text-dimmed mx-1">@</span>
+            <span class="text-sm text-muted group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
           </NuxtLink>
-          <div class="flex items-center gap-1 mt-0.5 text-[11px] text-[#aac0d0]">
+          <div class="flex items-center gap-1 mt-0.5 text-[11px] text-dimmed">
             <UIcon name="i-tabler-clock" />
             <span v-if="pb.lastPaymentTime">Last tx {{ formatTime(pb.lastPaymentTime) }}</span>
             <span v-else>No transactions yet</span>
           </div>
         </div>
 
-        <div class="flex items-center gap-1 bg-[#f7f9fb] border border-text/10 rounded-md px-2 py-1 shrink-0">
+        <div class="flex items-center gap-1 bg-default border border-default rounded-md px-2 py-1 shrink-0">
           <span class="font-mono text-xs tracking-widest min-w-9 text-center">
             {{ revealed.has(pb.id) ? pb.accessKey : '•'.repeat(pb.accessKey.length) }}
           </span>
           <button
             type="button"
             :aria-label="revealed.has(pb.id) ? 'Hide PIN' : 'Reveal PIN'"
-            class="flex items-center text-[#aac0d0] hover:text-dodgerblue-600"
+            class="flex items-center text-dimmed hover:text-primary"
             @click="togglePin(pb.id)"
           >
             <UIcon :name="revealed.has(pb.id) ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
@@ -60,12 +60,12 @@
         <div
           :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
           :aria-label="`LNURL-p ${pb.lnurlpActive ? 'active' : 'inactive'}`"
-          class="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0"
-          :class="pb.lnurlpActive ? 'bg-[#e8f8ee] text-[#1a6b3a]' : 'bg-[#f1f1f1] text-[#888]'"
+          class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
+          :class="pb.lnurlpActive ? 'bg-success/15 text-success' : 'bg-accented text-muted'"
         >
           <span
             class="w-1.5 h-1.5 rounded-full"
-            :class="pb.lnurlpActive ? 'bg-[#2d9e5a]' : 'bg-[#bbb]'"
+            :class="pb.lnurlpActive ? 'bg-success' : 'bg-[#6d6e70]'"
           />
           LNURL-p
         </div>
@@ -80,7 +80,7 @@
               aria-label="Deposit"
               :aria-disabled="!pb.lnurlpActive"
               class="w-7 h-7 flex items-center justify-center rounded-md"
-              :class="pb.lnurlpActive ? 'text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-dodgerblue-700' : 'text-text/20 cursor-not-allowed'"
+              :class="pb.lnurlpActive ? 'text-muted hover:bg-primary/10 hover:text-primary' : 'text-dimmed cursor-not-allowed'"
               @click="pb.lnurlpActive && openDeposit(pb)"
             >
               <UIcon name="i-tabler-qrcode" />
@@ -89,7 +89,7 @@
           <button
             type="button"
             aria-label="Delete"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-[#7fa0b8] hover:bg-dodgerblue-50 hover:text-text"
+            class="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:bg-primary/10 hover:text-highlighted"
             @click="askDelete(pb)"
           >
             <UIcon name="i-tabler-trash" />
@@ -103,11 +103,11 @@
       title="Delete piggy bank"
     >
       <template #body>
-        <p class="text-sm text-text/80">
+        <p class="text-sm text-muted">
           Are you sure? Do you want to delete
-          <span class="font-medium text-text">"{{ target?.name }}"</span>
+          <span class="font-bold text-highlighted">"{{ target?.name }}"</span>
           connected to
-          <span class="font-medium text-text break-all">{{ target?.lnbitsUrl }}</span>?
+          <span class="font-bold text-highlighted break-all">{{ target?.lnbitsUrl }}</span>?
         </p>
       </template>
       <template #footer>

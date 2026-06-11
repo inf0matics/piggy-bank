@@ -19,6 +19,12 @@ export default defineNuxtConfig({
     '@/assets/css/global.css',
     '@/assets/css/main.css',
   ],
+  // Base colour mode is light (the public area). The admin area is dark; the
+  // switch happens per-route in plugins/01.colorModeByAreaPlugin.ts.
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+  },
   ui: {
     theme: {
       colors: ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'footer'],
@@ -66,10 +72,16 @@ export default defineNuxtConfig({
     appManifest: false,
   },
   compatibilityDate: '2024-11-01',
+  // The public area keeps the Piggy fonts (Fredoka/Tektur/Public Sans). The
+  // admin area uses the tsp platform fonts: Nunito for text + headings, Space
+  // Grotesk for the wordmark. Both sets load; the admin set is applied only
+  // within the admin scope (see `.admin-root` in assets/css/main.css).
   fonts: {
     families: [
       { name: 'Fredoka', provider: 'google' },
       { name: 'Tektur', provider: 'google' },
+      { name: 'Nunito', provider: 'google', weights: [400, 600, 700, 800, 900] },
+      { name: 'Space Grotesk', provider: 'google', weights: [500, 700] },
     ],
     experimental: {
       processCSSVariables: true,

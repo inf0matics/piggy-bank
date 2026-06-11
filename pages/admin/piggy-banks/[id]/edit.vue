@@ -1,14 +1,14 @@
 <template>
   <div>
-    <header class="flex items-center gap-2 bg-white px-7 py-4 border-b border-text/10">
+    <header class="flex items-center gap-2 bg-elevated px-7 py-4 border-b border-default">
       <NuxtLink
         to="/admin/piggy-banks"
         aria-label="Back"
-        class="text-text/50 hover:text-text"
+        class="text-dimmed hover:text-highlighted"
       >
         <UIcon name="i-tabler-arrow-left" />
       </NuxtLink>
-      <h1 class="font-heading font-medium text-xl">
+      <h1 class="font-bold text-xl text-highlighted">
         Edit piggy bank
       </h1>
     </header>

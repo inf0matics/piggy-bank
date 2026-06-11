@@ -1,7 +1,7 @@
 <template>
   <div>
-    <header class="flex items-center bg-white px-7 py-4 border-b border-text/10">
-      <h1 class="font-heading font-medium text-xl">
+    <header class="flex items-center bg-elevated px-7 py-4 border-b border-default">
+      <h1 class="font-bold text-xl text-highlighted">
         User
       </h1>
     </header>
@@ -9,35 +9,35 @@
     <div class="px-7 py-5">
       <section
         data-testid="user-account"
-        class="bg-white rounded-[10px] border border-text/10 p-6 max-w-[480px]"
+        class="bg-elevated rounded-[10px] border border-default p-6 max-w-[480px]"
       >
         <div class="flex items-center gap-3 mb-5">
           <UIcon
             name="i-tabler-user-circle"
-            class="text-4xl text-dodgerblue-600 shrink-0"
+            class="text-4xl text-primary shrink-0"
           />
           <div class="min-w-0">
-            <p class="font-medium text-base truncate">
+            <p class="font-bold text-base truncate text-highlighted">
               {{ displayName }}
             </p>
-            <p class="text-xs text-[#7fa0b8]">
+            <p class="text-xs text-muted">
               tsp.tools account
             </p>
           </div>
         </div>
 
         <div v-if="me?.sub">
-          <p class="text-xs font-medium text-[#3a6080] mb-1">
+          <p class="text-xs font-bold text-muted mb-1">
             tsp.tools ID
           </p>
           <div class="flex items-center gap-2">
-            <p class="font-mono text-sm text-text break-all">
+            <p class="font-mono text-sm text-default break-all">
               {{ revealed ? me.sub : '••••••••••••' }}
             </p>
             <button
               type="button"
               :aria-label="revealed ? 'Hide ID' : 'Show ID'"
-              class="flex items-center text-[#aac0d0] hover:text-dodgerblue-600 shrink-0"
+              class="flex items-center text-dimmed hover:text-primary shrink-0"
               @click="revealed = !revealed"
             >
               <UIcon :name="revealed ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
@@ -48,13 +48,13 @@
         <div
           v-if="me?.lnurlAuth"
           data-testid="lnurl-auth-status"
-          class="flex items-center gap-2 mt-5 text-sm text-text"
+          class="flex items-center gap-2 mt-5 text-sm text-default"
         >
           <UIcon
             name="i-tabler-bolt"
-            class="text-base text-dodgerblue-600 shrink-0"
+            class="text-base text-primary shrink-0"
           />
-          <span>Connected via <strong class="font-medium">LNURL-auth</strong></span>
+          <span>Connected via <strong class="font-bold">LNURL-auth</strong></span>
         </div>
 
         <a
@@ -63,7 +63,7 @@
           target="_blank"
           rel="noopener noreferrer"
           data-testid="account-center-link"
-          class="inline-flex items-center gap-1.5 mt-5 text-sm font-medium text-dodgerblue-700 hover:underline"
+          class="inline-flex items-center gap-1.5 mt-5 text-sm font-bold text-primary hover:underline"
         >
           Manage account in LogTo
           <UIcon

@@ -1,8 +1,8 @@
 <template>
-  <div class="font-sans flex min-h-svh text-text">
-    <aside class="flex flex-col w-50 shrink-0 bg-text py-5">
-      <div class="px-4 pb-4 mb-3 border-b border-background-yellow/20">
-        <div class="font-heading font-semibold text-xl text-background-yellow">
+  <div class="admin-root flex min-h-svh bg-default text-default">
+    <aside class="flex flex-col w-56 shrink-0 bg-elevated border-r border-default py-5">
+      <div class="px-4 pb-4 mb-3 border-b border-default">
+        <div class="font-logo font-bold text-xl tracking-tight text-primary">
           <NuxtLink
             to="/"
             aria-label="Back to Piggy Bank"
@@ -12,42 +12,42 @@
         </div>
       </div>
 
-      <nav class="flex flex-col">
+      <nav class="flex flex-col gap-0.5 px-2">
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-2.5 px-4 py-2 text-sm text-white/55 border-l-2 border-transparent hover:text-white/80"
-          active-class="!text-white bg-white/8 !border-background-yellow"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-bold text-muted hover:text-highlighted hover:bg-default"
+          active-class="!text-inverted bg-primary hover:!bg-primary"
         >
           <UIcon
             :name="item.icon"
-            class="text-base"
+            class="text-lg"
           />
           {{ item.label }}
         </NuxtLink>
       </nav>
 
       <div class="mt-auto px-3 pt-3">
-        <p class="px-1 mb-1 text-[10px] uppercase tracking-wide text-white/30">
+        <p class="px-1 mb-1 text-[10px] uppercase tracking-wide text-dimmed">
           User
         </p>
         <NuxtLink
           to="/admin/user"
           data-testid="logto-account"
-          class="flex items-center gap-2 px-1 py-1.5 mb-1 rounded-md hover:bg-white/8"
+          class="flex items-center gap-2 px-1 py-1.5 mb-1 rounded-md hover:bg-default"
         >
           <UIcon
             name="i-tabler-user-circle"
-            class="text-2xl text-background-yellow/80 shrink-0"
+            class="text-2xl text-primary shrink-0"
           />
-          <p class="min-w-0 text-xs text-white/85 truncate">
+          <p class="min-w-0 text-xs text-default truncate">
             {{ displayName }}
           </p>
         </NuxtLink>
         <a
           href="/admin/sign-out"
-          class="flex items-center gap-2 px-1 py-1.5 text-xs text-white/40 hover:text-white/70"
+          class="flex items-center gap-2 px-1 py-1.5 rounded-md text-xs text-muted hover:text-highlighted hover:bg-default"
         >
           <UIcon
             name="i-tabler-logout"
@@ -56,13 +56,13 @@
           Logout
         </a>
 
-        <div class="flex items-center gap-1.5 px-1 pt-2.5 mt-2 border-t border-white/10 text-xs text-white/40">
+        <div class="flex items-center gap-1.5 px-1 pt-2.5 mt-2 border-t border-default text-xs text-muted">
           <a
             v-if="githubLink"
             :href="githubLink"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-1 hover:text-white/70"
+            class="flex items-center gap-1 hover:text-highlighted"
           >
             <UIcon name="i-grommet-icons-github" />
             GitHub
@@ -72,13 +72,13 @@
             :href="versionLink"
             target="_blank"
             rel="noopener noreferrer"
-            class="ml-auto rounded-full border border-white/20 px-2 py-0.5 hover:text-white/70 hover:border-white/40"
+            class="ml-auto rounded-full border border-default px-2 py-0.5 hover:text-highlighted hover:border-accented"
           >
             {{ version }}
           </a>
           <span
             v-else-if="version"
-            class="ml-auto rounded-full border border-white/20 px-2 py-0.5"
+            class="ml-auto rounded-full border border-default px-2 py-0.5"
           >
             {{ version }}
           </span>
@@ -86,7 +86,7 @@
       </div>
     </aside>
 
-    <main class="flex-1 min-w-0 bg-[#f7f9fb]">
+    <main class="flex-1 min-w-0 bg-default">
       <slot />
     </main>
   </div>
