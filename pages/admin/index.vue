@@ -1,8 +1,24 @@
 <template>
-  <div class="admin-root min-h-svh bg-default text-default">
-    <div class="max-w-4xl mx-auto px-6 sm:px-10 pt-10 pb-16">
-      <!-- Top bar -->
-      <div class="flex justify-end mb-5">
+  <div class="admin-root min-h-svh bg-default text-default flex flex-col">
+    <div class="max-w-4xl w-full flex-1 mx-auto px-6 sm:px-10 pt-10 pb-16">
+      <!-- Top bar: headline badge, with the theme toggle + back button aligned to it -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="inline-flex items-center gap-2 bg-primary/15 text-primary font-bold text-xl px-5 py-2 rounded-full">
+          <UIcon name="i-tabler-bolt" />Piggy Bank Admin
+        </div>
+        <span class="flex-1" />
+        <button
+          type="button"
+          data-testid="theme-toggle"
+          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-elevated text-muted hover:bg-accented hover:text-highlighted"
+          @click="toggleTheme"
+        >
+          <UIcon
+            :name="isDark ? 'i-tabler-sun' : 'i-tabler-moon'"
+            class="text-lg"
+          />
+        </button>
         <NuxtLink
           to="/"
           aria-label="Back to Piggy Bank"
@@ -13,11 +29,6 @@
             class="text-lg"
           />
         </NuxtLink>
-      </div>
-
-      <!-- Badge -->
-      <div class="inline-flex items-center gap-2 bg-primary/15 text-primary font-bold text-xl px-5 py-2 rounded-full mb-6">
-        <UIcon name="i-tabler-bolt" />Piggy Bank Admin
       </div>
 
       <!-- Hero -->
@@ -139,6 +150,11 @@
         </div>
       </div>
     </div>
+
+    <!-- Same footer elements as the public start page (Legal Notice, GitHub, version). -->
+    <div class="print:hidden">
+      <FooterMain />
+    </div>
   </div>
 </template>
 
@@ -149,6 +165,11 @@
 definePageMeta({
   layout: false,
 })
+
+// Light/dark toggle (icon only, in the top bar). Same remembered admin
+// preference as the sidebar toggle; applied per-area in the colour-mode plugin.
+const { pref: themePref, toggle: toggleTheme } = useAdminColorMode()
+const isDark = computed(() => themePref.value === 'dark')
 
 // Dev-only shortcut to enter the admin area without Logto. Sets the e2e auth
 // shim cookie, then hard-navigates so the cookie reaches the server. Only works

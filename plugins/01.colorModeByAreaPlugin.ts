@@ -1,22 +1,27 @@
 // Per-area colour mode. The public area (Piggy start page + piggy-bank
-// functions) stays light; the admin area is dark by default. This replaces the
-// previous global force-light plugin so the two surfaces can differ.
+// functions) is always light; the admin area is user-toggleable, defaulting to
+// dark. This replaces the previous global force-light plugin.
 //
-// The mode is derived purely from the route, never from a saved preference, so
-// a value persisted by colour-mode (e.g. dark from a previous /admin visit)
-// can't leak into the public area, and vice versa.
+// The mode is derived from the route, never from colour-mode's own persisted
+// value, so the two surfaces can't fight:
+//   - public route  → always 'light'
+//   - admin route   → the remembered admin preference (useAdminColorMode,
+//                     default dark), kept in its own cookie so forcing the
+//                     public area light never erases it.
 //
-// @nuxtjs/color-mode persists a single global preference in localStorage and
-// re-applies it from storage on mount. To stay authoritative we (a) set
-// `preference`/`value` during setup (SSR + initial render) and on every route
-// change, and (b) re-assert the `<html>` class on `app:mounted` *after*
-// colour-mode has read storage — writing the class directly so route intent
-// always wins regardless of plugin/mount ordering.
+// @nuxtjs/color-mode persists a single global value in localStorage and
+// re-applies it from storage on mount, so we (a) set `preference`/`value`
+// during setup (SSR + initial render), on every route change, and whenever the
+// admin preference changes (the toggle), and (b) re-assert the `<html>` class on
+// `app:mounted` — writing it directly so route intent always wins regardless of
+// plugin/mount ordering.
 export default defineNuxtPlugin((nuxtApp) => {
   const colorMode = useColorMode()
   const route = useRoute()
+  const { pref: adminPref } = useAdminColorMode()
 
-  const modeForPath = (path: string) => (path.startsWith('/admin') ? 'dark' : 'light')
+  const modeForPath = (path: string) =>
+    path.startsWith('/admin') ? adminPref.value : 'light'
 
   const apply = (path: string) => {
     const mode = modeForPath(path)
@@ -32,6 +37,8 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   apply(route.path)
   watch(() => route.path, apply)
+  // The sidebar toggle flips adminPref; re-apply when on an admin route.
+  watch(adminPref, () => apply(route.path))
   // Re-assert after colour-mode's own on-mount logic (which reads stale storage).
   nuxtApp.hook('app:mounted', () => nextTick(() => apply(route.path)))
 })

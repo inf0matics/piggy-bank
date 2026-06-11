@@ -46,20 +46,23 @@
  * Admin design system — tsp platform tokens, scoped to the admin layout.
  *
  * The admin layout root carries `.admin-root`; these declarations re-point
- * Nuxt UI's semantic CSS variables (primary + dark bg/surface/border/text) to
- * the tsp palette for everything rendered inside admin, without touching the
- * public area. The admin area also runs in dark colour mode (set per-route in
- * plugins/01.colorModeByAreaPlugin.ts), so the dark variants of Nuxt UI
- * components line up with these anthracite values.
+ * Nuxt UI's semantic CSS variables to the tsp palette for everything rendered
+ * inside admin, without touching the public area. The admin area supports both
+ * colour modes (dark by default, user-toggleable — see
+ * plugins/01.colorModeByAreaPlugin.ts); the bg/surface/border/text group flips
+ * with the mode, while the brand colours (amber primary, on-primary) stay the
+ * same in both, exactly as design-system.md specifies.
  *
  * Because custom properties resolve per element, setting `--ui-primary` etc.
  * here (rather than on `<html>`) is what keeps the override admin-only —
- * `<html>.dark` still resolves primary to dodgerblue for the public area.
+ * `<html>.dark` still resolves primary to dodgerblue for the public area. The
+ * `.dark .admin-root` / `.light .admin-root` rules (specificity 0,2,0) beat
+ * Nuxt UI's html-level `.dark` / `.light` for the admin subtree.
  */
 .admin-root {
   font-family: var(--font-admin);
 
-  /* primary → amber */
+  /* primary → amber (mode-independent) */
   --ui-color-primary-50: var(--color-tsp-amber-50);
   --ui-color-primary-100: var(--color-tsp-amber-100);
   --ui-color-primary-200: var(--color-tsp-amber-200);
@@ -73,7 +76,15 @@
   --ui-color-primary-950: var(--color-tsp-amber-950);
   --ui-primary: var(--color-tsp-amber-400);
 
-  /* anthracite dark surfaces (tsp dark theme) */
+  /* text/icon on top of amber fills — amber is light, so dark text in BOTH
+     modes (the `on-primary` token). */
+  --ui-text-inverted: #212529;
+
+  --ui-radius: 0.5rem;
+}
+
+/* Dark admin (default) — tsp anthracite surfaces. */
+.dark .admin-root {
   --ui-bg: #212529;
   --ui-bg-muted: #2b3035;
   --ui-bg-elevated: #2b3035;
@@ -90,10 +101,26 @@
   --ui-text-toned: #ced4da;
   --ui-text: #f0f0f0;
   --ui-text-highlighted: #ffffff;
-  /* text/icon on top of amber fills (amber is light → dark text) */
-  --ui-text-inverted: #212529;
+}
 
-  --ui-radius: 0.5rem;
+/* Light admin — tsp light surfaces (design-system.md light theme). */
+.light .admin-root {
+  --ui-bg: #f8f9fa;
+  --ui-bg-muted: #ffffff;
+  --ui-bg-elevated: #ffffff;
+  --ui-bg-accented: #dee2e6;
+  --ui-bg-inverted: #212529;
+
+  --ui-border: #dee2e6;
+  --ui-border-muted: #e9ecef;
+  --ui-border-accented: #ced4da;
+  --ui-border-inverted: #212529;
+
+  --ui-text-dimmed: #9ca3af;
+  --ui-text-muted: #6d6e70;
+  --ui-text-toned: #343a40;
+  --ui-text: #212529;
+  --ui-text-highlighted: #16191c;
 }
 
 /* The wordmark uses Space Grotesk; the rest of admin stays Nunito. */

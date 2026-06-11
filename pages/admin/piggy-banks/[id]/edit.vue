@@ -1,25 +1,26 @@
 <template>
   <div>
-    <header class="flex items-center gap-2 bg-elevated px-7 py-4 border-b border-default">
+    <div class="flex items-center gap-2 mb-6">
       <NuxtLink
         to="/admin/piggy-banks"
         aria-label="Back"
         class="text-dimmed hover:text-highlighted"
       >
-        <UIcon name="i-tabler-arrow-left" />
+        <UIcon
+          name="i-tabler-arrow-left"
+          class="text-lg"
+        />
       </NuxtLink>
-      <h1 class="font-bold text-xl text-highlighted">
+      <h1 class="font-bold text-2xl text-highlighted">
         Edit piggy bank
       </h1>
-    </header>
-
-    <div class="px-7 py-5">
-      <AdminPiggyBankForm
-        :initial="initial"
-        submit-label="Save"
-        :submit-fn="save"
-      />
     </div>
+
+    <AdminPiggyBankForm
+      :initial="initial"
+      submit-label="Save"
+      :submit-fn="save"
+    />
   </div>
 </template>
 

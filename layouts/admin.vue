@@ -1,7 +1,7 @@
 <template>
   <div class="admin-root flex min-h-svh bg-default text-default">
     <aside class="flex flex-col w-56 shrink-0 bg-elevated border-r border-default py-5">
-      <div class="px-4 pb-4 mb-3 border-b border-default">
+      <div class="mx-2 px-2 pb-4 mb-3 border-b border-default">
         <div class="font-logo font-bold text-xl tracking-tight text-primary">
           <NuxtLink
             to="/"
@@ -56,7 +56,21 @@
           Logout
         </a>
 
-        <div class="flex items-center gap-1.5 px-1 pt-2.5 mt-2 border-t border-default text-xs text-muted">
+        <button
+          type="button"
+          data-testid="theme-toggle"
+          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          class="flex items-center gap-2 w-full px-1 pt-2.5 pb-1.5 mt-2 rounded-md border-t border-default text-xs text-muted hover:text-highlighted hover:bg-default"
+          @click="toggleTheme"
+        >
+          <UIcon
+            :name="isDark ? 'i-tabler-sun' : 'i-tabler-moon'"
+            class="text-base"
+          />
+          {{ isDark ? 'Light mode' : 'Dark mode' }}
+        </button>
+
+        <div class="flex items-center gap-1.5 px-1 pt-1.5 text-xs text-muted">
           <a
             v-if="githubLink"
             :href="githubLink"
@@ -87,7 +101,11 @@
     </aside>
 
     <main class="flex-1 min-w-0 bg-default">
-      <slot />
+      <!-- Content sits in a centered column on the full-bleed background — no
+           top header bar (see architecture/design-system.md → Layout). -->
+      <div class="max-w-4xl mx-auto px-6 sm:px-10 pt-10 pb-16">
+        <slot />
+      </div>
     </main>
   </div>
 </template>
@@ -97,6 +115,11 @@ const navItems = [
   { label: 'Piggy Banks', to: '/admin/piggy-banks', icon: 'i-tabler-pig-money' },
   { label: 'Settings', to: '/admin/settings', icon: 'i-tabler-settings' },
 ]
+
+// Admin light/dark toggle. The preference is remembered (cookie) and applied
+// per-area in plugins/01.colorModeByAreaPlugin.ts; the public area stays light.
+const { pref: themePref, toggle: toggleTheme } = useAdminColorMode()
+const isDark = computed(() => themePref.value === 'dark')
 
 const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
