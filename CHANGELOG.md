@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.14.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.13.0...v1.14.0)
+
+### 🚀 Enhancements
+
+- **admin:** Adopt tsp design system (dark, amber, Nunito) scoped to admin ([6e91355](https://github.com/inf0matics/piggy-bank/commit/6e91355))
+- **admin:** Add light mode toggle + align layout to the design-system template ([1828c5c](https://github.com/inf0matics/piggy-bank/commit/1828c5c))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.13.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.12.0...v1.13.0)
