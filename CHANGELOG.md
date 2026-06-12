@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.14.1
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.14.0...v1.14.1)
+
+### 💅 Refactors
+
+- **admin:** Consume @thespielplatz/tsp-tools-theme layer (scoped) ([cdfe2f2](https://github.com/inf0matics/piggy-bank/commit/cdfe2f2))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.14.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.13.0...v1.14.0)
