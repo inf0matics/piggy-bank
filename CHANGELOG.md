@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.15.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.14.1...v1.15.0)
+
+### 🚀 Enhancements
+
+- Add simplified piggy favicon ([18052f8](https://github.com/inf0matics/piggy-bank/commit/18052f8))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.14.1
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.14.0...v1.14.1)
