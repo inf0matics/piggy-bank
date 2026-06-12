@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Piggy Bank">
+  <!-- Brand yellow rounded-square background -->
+  <rect width="64" height="64" rx="14" fill="#fbcf48"/>
+  <!-- Ears (rounded triangles via round line joins) -->
+  <path d="M16 11 L27 25 L13 23 Z" fill="#ee7fa6" stroke="#ee7fa6" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M48 11 L37 25 L51 23 Z" fill="#ee7fa6" stroke="#ee7fa6" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Head -->
+  <circle cx="32" cy="34" r="20" fill="#f48fb1" stroke="#e0709a" stroke-width="1.5"/>
+  <!-- Snout -->
+  <ellipse cx="32" cy="40" rx="12" ry="8.5" fill="#ee7299"/>
+  <!-- Nostrils -->
+  <ellipse cx="27.5" cy="40" rx="2" ry="3" fill="#1e4563"/>
+  <ellipse cx="36.5" cy="40" rx="2" ry="3" fill="#1e4563"/>
+  <!-- Eyes -->
+  <circle cx="24" cy="28" r="2.4" fill="#1e4563"/>
+  <circle cx="40" cy="28" r="2.4" fill="#1e4563"/>
+</svg>
