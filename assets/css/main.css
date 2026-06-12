@@ -1,3 +1,12 @@
+/*
+ * Piggy-specific design tokens (the public area).
+ *
+ * This file stays its own Tailwind entry (it has its own `@theme`, so it needs
+ * the framework import to compile). The admin design-system tokens come from the
+ * @thespielplatz/tsp-tools-theme layer's own stylesheet — a separate Tailwind
+ * entry — so the duplicate import here is intentional and the two don't clash
+ * (the `.tsp-theme` scope only re-points Nuxt UI vars inside the admin subtree).
+ */
 @import "tailwindcss";
 @import "@nuxt/ui";
 
@@ -7,27 +16,9 @@
 
   --font-sans: 'Public Sans', sans-serif;
 
-  /* tsp platform fonts — applied only within the admin scope (.admin-root). */
-  --font-admin: 'Nunito', sans-serif;
-  --font-logo: 'Space Grotesk', sans-serif;
-
   --color-background-yellow: #fbcf48;
 
   --color-text: #1e4563;
-
-  /* tsp amber ramp — the admin primary. Anchored on the brand tokens:
-     400 = #fbad18 (primary), 500 = #f7941e (hover), 600 = #f47920 (active). */
-  --color-tsp-amber-50: #fff8e9;
-  --color-tsp-amber-100: #feecc2;
-  --color-tsp-amber-200: #fdd988;
-  --color-tsp-amber-300: #fcc54e;
-  --color-tsp-amber-400: #fbad18;
-  --color-tsp-amber-500: #f7941e;
-  --color-tsp-amber-600: #f47920;
-  --color-tsp-amber-700: #c75f17;
-  --color-tsp-amber-800: #9e4c16;
-  --color-tsp-amber-900: #7f4015;
-  --color-tsp-amber-950: #461f07;
 
   --color-dodgerblue-50: #f0f8fe;
   --color-dodgerblue-100: #ddedfc;
@@ -40,90 +31,4 @@
   --color-dodgerblue-800: #2853a5;
   --color-dodgerblue-900: #254883;
   --color-dodgerblue-950: #1b2d50;
-}
-
-/*
- * Admin design system — tsp platform tokens, scoped to the admin layout.
- *
- * The admin layout root carries `.admin-root`; these declarations re-point
- * Nuxt UI's semantic CSS variables to the tsp palette for everything rendered
- * inside admin, without touching the public area. The admin area supports both
- * colour modes (dark by default, user-toggleable — see
- * plugins/01.colorModeByAreaPlugin.ts); the bg/surface/border/text group flips
- * with the mode, while the brand colours (amber primary, on-primary) stay the
- * same in both, exactly as design-system.md specifies.
- *
- * Because custom properties resolve per element, setting `--ui-primary` etc.
- * here (rather than on `<html>`) is what keeps the override admin-only —
- * `<html>.dark` still resolves primary to dodgerblue for the public area. The
- * `.dark .admin-root` / `.light .admin-root` rules (specificity 0,2,0) beat
- * Nuxt UI's html-level `.dark` / `.light` for the admin subtree.
- */
-.admin-root {
-  font-family: var(--font-admin);
-
-  /* primary → amber (mode-independent) */
-  --ui-color-primary-50: var(--color-tsp-amber-50);
-  --ui-color-primary-100: var(--color-tsp-amber-100);
-  --ui-color-primary-200: var(--color-tsp-amber-200);
-  --ui-color-primary-300: var(--color-tsp-amber-300);
-  --ui-color-primary-400: var(--color-tsp-amber-400);
-  --ui-color-primary-500: var(--color-tsp-amber-500);
-  --ui-color-primary-600: var(--color-tsp-amber-600);
-  --ui-color-primary-700: var(--color-tsp-amber-700);
-  --ui-color-primary-800: var(--color-tsp-amber-800);
-  --ui-color-primary-900: var(--color-tsp-amber-900);
-  --ui-color-primary-950: var(--color-tsp-amber-950);
-  --ui-primary: var(--color-tsp-amber-400);
-
-  /* text/icon on top of amber fills — amber is light, so dark text in BOTH
-     modes (the `on-primary` token). */
-  --ui-text-inverted: #212529;
-
-  --ui-radius: 0.5rem;
-}
-
-/* Dark admin (default) — tsp anthracite surfaces. */
-.dark .admin-root {
-  --ui-bg: #212529;
-  --ui-bg-muted: #2b3035;
-  --ui-bg-elevated: #2b3035;
-  --ui-bg-accented: #404041;
-  --ui-bg-inverted: #f0f0f0;
-
-  --ui-border: #404041;
-  --ui-border-muted: #343a40;
-  --ui-border-accented: #404041;
-  --ui-border-inverted: #f0f0f0;
-
-  --ui-text-dimmed: #6d6e70;
-  --ui-text-muted: #adb5bd;
-  --ui-text-toned: #ced4da;
-  --ui-text: #f0f0f0;
-  --ui-text-highlighted: #ffffff;
-}
-
-/* Light admin — tsp light surfaces (design-system.md light theme). */
-.light .admin-root {
-  --ui-bg: #f8f9fa;
-  --ui-bg-muted: #ffffff;
-  --ui-bg-elevated: #ffffff;
-  --ui-bg-accented: #dee2e6;
-  --ui-bg-inverted: #212529;
-
-  --ui-border: #dee2e6;
-  --ui-border-muted: #e9ecef;
-  --ui-border-accented: #ced4da;
-  --ui-border-inverted: #212529;
-
-  --ui-text-dimmed: #9ca3af;
-  --ui-text-muted: #6d6e70;
-  --ui-text-toned: #343a40;
-  --ui-text: #212529;
-  --ui-text-highlighted: #16191c;
-}
-
-/* The wordmark uses Space Grotesk; the rest of admin stays Nunito. */
-.admin-root .font-logo {
-  font-family: var(--font-logo);
 }

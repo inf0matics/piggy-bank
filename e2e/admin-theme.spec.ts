@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test'
 // Admin design-system theming (see admin-07-design-system spec). The admin area
 // adopts the tsp platform tokens — dark by default, amber (#fbad18) primary,
 // Nunito text — while the public area keeps the Piggy light theme. Colour mode
-// is per-route (plugins/01.colorModeByAreaPlugin.ts).
+// is per-route, driven by the @thespielplatz/tsp-tools-theme layer (scoped mode).
 
 // #fbad18, the amber primary, as the browser reports background-color.
 const AMBER_RGB = 'rgb(251, 173, 24)'
@@ -85,7 +85,7 @@ test('admin defaults to dark and the sidebar toggle switches to light', async ({
   await expect(page.getByRole('link', { name: 'Add piggy bank' })).toHaveCSS('background-color', AMBER_RGB)
 
   // Toggle → light surfaces, but the primary stays amber.
-  await page.getByTestId('theme-toggle').click()
+  await page.getByTestId('tsp-theme-toggle').click()
   await expect(page.locator('html')).toHaveClass(/light/)
   await expect(page.locator('main')).toHaveCSS('background-color', LIGHT_BG_RGB)
   await expect(page.getByRole('link', { name: 'Add piggy bank' })).toHaveCSS('background-color', AMBER_RGB)
@@ -94,7 +94,7 @@ test('admin defaults to dark and the sidebar toggle switches to light', async ({
 test('the admin light preference is remembered across a reload', async ({ page }) => {
   await loginAdmin(page)
   await page.goto('/admin/piggy-banks')
-  await page.getByTestId('theme-toggle').click()
+  await page.getByTestId('tsp-theme-toggle').click()
   await expect(page.locator('html')).toHaveClass(/light/)
 
   await page.reload()
@@ -105,7 +105,7 @@ test('the admin light preference is remembered across a reload', async ({ page }
 test('the public area stays light even when admin is set to light', async ({ page }) => {
   await loginAdmin(page)
   await page.goto('/admin/piggy-banks')
-  await page.getByTestId('theme-toggle').click()
+  await page.getByTestId('tsp-theme-toggle').click()
   await expect(page.locator('html')).toHaveClass(/light/)
 
   // Public is always light regardless of the admin preference …

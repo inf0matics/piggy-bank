@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-root min-h-svh bg-default text-default flex flex-col">
+  <div class="tsp-theme min-h-svh bg-default text-default flex flex-col">
     <div class="max-w-4xl w-full flex-1 mx-auto px-6 sm:px-10 pt-10 pb-16">
       <!-- Top bar: headline badge, with the theme toggle + back button aligned to it -->
       <div class="flex items-center gap-3 mb-6">
@@ -9,7 +9,7 @@
         <span class="flex-1" />
         <button
           type="button"
-          data-testid="theme-toggle"
+          data-testid="tsp-theme-toggle"
           :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
           class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-elevated text-muted hover:bg-accented hover:text-highlighted"
           @click="toggleTheme"
@@ -167,8 +167,8 @@ definePageMeta({
 })
 
 // Light/dark toggle (icon only, in the top bar). Same remembered admin
-// preference as the sidebar toggle; applied per-area in the colour-mode plugin.
-const { pref: themePref, toggle: toggleTheme } = useAdminColorMode()
+// preference as the sidebar toggle; applied per-area by the tsp theme layer.
+const { pref: themePref, toggle: toggleTheme } = useTspColorMode()
 const isDark = computed(() => themePref.value === 'dark')
 
 // Dev-only shortcut to enter the admin area without Logto. Sets the e2e auth

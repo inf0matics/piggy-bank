@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  // The admin design system comes from the shared tsp.tools theme layer, applied
+  // in SCOPED mode: only /admin is themed (amber/anthracite, toggleable dark by
+  // default); the public area stays on the Piggy theme and light. See the
+  // `tspTheme` runtime config below.
+  extends: ['@thespielplatz/tsp-tools-theme'],
   modules: [
     '@nuxt/ui',
     '@thespielplatz/nuxt-auth',
@@ -66,6 +71,15 @@ export default defineNuxtConfig({
       // cookie then counts as an authenticated admin so the CRUD tests can run
       // without a real Logto tenant. Never enable this in production.
       adminAuthMode: '',
+      // tsp.tools theme layer: theme only the admin area, leave the public
+      // (Piggy) area untouched and light. The admin colour mode is remembered
+      // (cookie) and defaults to dark.
+      tspTheme: {
+        apply: 'scoped',
+        pathPrefix: '/admin',
+        publicMode: 'light',
+        defaultMode: 'dark',
+      },
     },
   },
   experimental: {
@@ -73,15 +87,11 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2024-11-01',
   // The public area keeps the Piggy fonts (Fredoka/Tektur/Public Sans). The
-  // admin area uses the tsp platform fonts: Nunito for text + headings, Space
-  // Grotesk for the wordmark. Both sets load; the admin set is applied only
-  // within the admin scope (see `.admin-root` in assets/css/main.css).
+  // admin fonts (Nunito + Space Grotesk) are loaded by the tsp theme layer.
   fonts: {
     families: [
       { name: 'Fredoka', provider: 'google' },
       { name: 'Tektur', provider: 'google' },
-      { name: 'Nunito', provider: 'google', weights: [400, 600, 700, 800, 900] },
-      { name: 'Space Grotesk', provider: 'google', weights: [500, 700] },
     ],
     experimental: {
       processCSSVariables: true,
