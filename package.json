@@ -27,7 +27,7 @@
     "@nuxt/eslint": "^1.12.1",
     "@nuxt/eslint-config": "^1.12.1",
     "@playwright/test": "^1.60.0",
-    "@thespielplatz/tsp-tools-theme": "^0.1.0",
+    "@thespielplatz/tsp-tools-theme": "^0.1.1",
     "@types/qrcode-svg": "^1.1.5",
     "changelogen": "^0.6.2",
     "vue-tsc": "3.2.2"
