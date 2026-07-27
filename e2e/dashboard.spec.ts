@@ -18,7 +18,12 @@ test('shows the user name', async ({ page }) => {
 
 test('shows the sats balance', async ({ page }) => {
   await login(page)
-  await expect(page.getByText(DEFAULT_BALANCE)).toBeVisible({ timeout: 15_000 })
+  // The balance plays a count-up animation (utils/countTo) that steps through
+  // many intermediate strings before landing exactly on the final value. Assert
+  // on the specific element with toHaveText, which retries until the text
+  // settles on the balance — rather than scanning the whole page for a
+  // transient substring match, which races the animation under load.
+  await expect(page.getByTestId('sats-balance')).toHaveText(DEFAULT_BALANCE, { timeout: 15_000 })
 })
 
 test('shows the EUR value', async ({ page }) => {

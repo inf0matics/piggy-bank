@@ -1,7 +1,10 @@
 <template>
   <div class="flex justify-center">
     <div class="flex flex-col items-end tabular-nums">
-      <div class="text-3xl font-semibold">
+      <div
+        class="text-3xl font-semibold"
+        data-testid="sats-balance"
+      >
         {{ satsText }}
       </div>
       <div
