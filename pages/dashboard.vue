@@ -12,11 +12,17 @@
         </div>
       </div>
     </div>
-    <div class="relative h-[290px] w-[384px] bg-[url('/img/piggy.png')] bg-cover bg-center font-numbers">
-      <div class="hidden print:flex absolute top-[65px] w-80 ml-8 justify-center">
+    <!--
+      Piggy panel: the piggy.png image with the balance overlaid. Fluid down to
+      narrow phones (w-full) while capped at the original design size (384px), so
+      desktop is unchanged. Overlay offsets are percentages of the box, not fixed
+      pixels, so they track the image as it scales.
+    -->
+    <div class="relative w-full max-w-[384px] aspect-[384/290] bg-[url('/img/piggy.png')] bg-cover bg-center font-numbers">
+      <div class="hidden print:flex absolute top-[22.4%] left-[8.33%] w-[83.33%] justify-center">
         <PiggyQRCode />
       </div>
-      <div class="absolute top-[120px] w-80 ml-6 flex flex-col justify-center print:hidden">
+      <div class="absolute top-[41.38%] left-[6.25%] w-[83.33%] flex flex-col justify-center print:hidden">
         <PiggyValue
           ref="piggyValueRef"
           :sats="sats"
@@ -25,7 +31,7 @@
         />
       </div>
     </div>
-    <div class="mt-2 min-w-80 print:hidden">
+    <div class="mt-2 w-full max-w-80 print:hidden">
       <InfoBox
         ref="infoBoxRef"
         :lnurl="lnurl"
