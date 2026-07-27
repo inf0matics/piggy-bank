@@ -72,5 +72,5 @@ test('logout returns to the login screen', async ({ page }) => {
   await page.getByRole('button', { name: 'Logout' }).click()
 
   await page.waitForURL(url => new URL(url).pathname === '/')
-  await expect(page.getByText('Piggy Bank')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeVisible()
 })

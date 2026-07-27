@@ -10,7 +10,7 @@ test.beforeEach(async () => {
 
 test('teaser bar is visible on the PIN page below "Powered by Lightning"', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('Piggy Bank')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeVisible()
 
   await expect(page.getByText('Powered by')).toBeVisible()
   await expect(page.getByText('Want to create one for a friend?')).toBeVisible()
@@ -27,7 +27,7 @@ test('clicking "Start here →" navigates to /admin', async ({ page }) => {
 
 test('PIN entry flow is unaffected - correct PIN still redirects to /dashboard', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('Piggy Bank')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeVisible()
 
   for (const digit of PIN) {
     await page.getByRole('button', { name: digit, exact: true }).click()

@@ -78,8 +78,7 @@ const { data: me } = await useFetch<{ sub: string, name?: string, username?: str
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
 
 // GitHub link + version, sourced from the same runtimeConfig.public.devBase
-// (set by modules/dev-base.ts) the site footer (FooterGithubLink/
-// FooterVersionBadge) uses.
+// (set by modules/dev-base.ts) the public site footer (FooterMain) uses.
 const devBase = useRuntimeConfig().public.devBase as {
   githubLink?: string
   version?: string
