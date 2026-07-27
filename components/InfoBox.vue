@@ -6,6 +6,7 @@
           v-if="hasDepositAvaliable"
           icon="i-heroicons-arrow-down-on-square-20-solid"
           size="sm"
+          class="transition-transform duration-100 active:scale-95"
         >
           Deposit
         </UButton>
@@ -20,6 +21,7 @@
       <UButton
         icon="i-heroicons-arrow-up-tray-20-solid"
         size="sm"
+        class="transition-transform duration-100 active:scale-95"
         :class="{ 'ml-auto': !hasDepositAvaliable }"
         @click="emit('logout')"
       >
@@ -42,7 +44,7 @@
         </div>
         <div class="ml-2 border-t border-gray-300 flex-grow" />
       </div>
-      <div class="flex justify-between">
+      <div class="flex justify-between tabular-nums">
         <div>{{ formatTime(payment?.time) }}</div>
         <div>{{ formatSats(payment?.sats) }} BTC</div>
       </div>

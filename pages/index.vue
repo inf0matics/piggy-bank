@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex flex-col items-center justify-center">
-      <div class="text-center font-heading font-semibold text-6xl py-10 flex flex-col items-center">
+      <div class="text-center font-heading font-semibold text-6xl py-10 flex flex-col items-center text-balance">
         <div>
           <UIcon
             name="i-uil-bitcoin"
@@ -10,7 +10,7 @@
         </div>
         <div>Piggy Bank</div>
       </div>
-      <div class="bg-white min-w-96 h-14 pt-1 shadow-md rounded-md text-center font-bold font-mono text-4xl">
+      <div class="bg-white w-96 max-w-[90vw] h-14 pt-1 shadow-md rounded-md text-center font-bold font-mono text-4xl tabular-nums tracking-widest">
         {{ status }}
       </div>
       <div class="h-4" />
@@ -20,6 +20,7 @@
             v-for="data in keys"
             :key="data.key"
             color="primary"
+            class="select-none transition-transform duration-100 active:scale-95"
             :disabled="['enter', 'delete'].includes(data.type) && code.length === 0"
             @click="handleButtonPress(data)"
           >
@@ -54,7 +55,7 @@
           <span>🐷 Want to create one for a friend?</span>
           <NuxtLink
             to="/admin"
-            class="whitespace-nowrap text-dodgerblue-600 hover:underline"
+            class="whitespace-nowrap text-dodgerblue-600 font-semibold hover:underline hover:text-dodgerblue-700 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dodgerblue-500 transition-colors"
           >
             Start here →
           </NuxtLink>

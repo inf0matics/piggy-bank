@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center">
-    <div class="flex flex-col items-end">
+    <div class="flex flex-col items-end tabular-nums">
       <div class="text-3xl font-semibold">
         {{ satsText }}
       </div>

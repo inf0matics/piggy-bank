@@ -1,22 +1,22 @@
 <template>
   <div class="px-4 sm:px-6 py-8 text-text">
-    <div>
-      <NuxtLink
-        to="/"
-        class="inline-flex items-center gap-1 text-sm font-bold hover:underline"
-      >
-        <UIcon name="i-tabler-arrow-left" /> Back
-      </NuxtLink>
+    <NuxtLink
+      to="/"
+      class="inline-flex items-center gap-1 text-sm font-bold rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text transition-opacity active:opacity-70"
+    >
+      <UIcon name="i-tabler-arrow-left" /> Back
+    </NuxtLink>
 
-      <h1 class="text-3xl font-heading font-bold mt-4 mb-1">
+    <article class="bg-white rounded-2xl shadow-md p-6 sm:p-8 mt-4 leading-relaxed">
+      <h1 class="text-4xl font-heading font-semibold mb-1 text-balance">
         Privacy Policy
       </h1>
-      <p class="text-sm opacity-80 mb-6">
+      <p class="text-sm text-text/70 mb-8">
         Last updated: 27 July 2026
       </p>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           1. Who is responsible
         </h2>
         <p>
@@ -34,7 +34,7 @@
       </section>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           2. What data we process and why
         </h2>
         <p>
@@ -79,7 +79,7 @@
       </section>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           3. Legal basis
         </h2>
         <p>
@@ -90,7 +90,7 @@
       </section>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           4. Recipients and third parties
         </h2>
         <p>
@@ -102,7 +102,7 @@
       </section>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           5. Retention
         </h2>
         <p>
@@ -114,7 +114,7 @@
       </section>
 
       <section class="space-y-3 mb-8">
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-heading font-semibold">
           6. Your rights
         </h2>
         <p>
@@ -131,7 +131,7 @@
           >Imprint</a>.
         </p>
       </section>
-    </div>
+    </article>
   </div>
 </template>
 
