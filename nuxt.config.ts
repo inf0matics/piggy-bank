@@ -8,7 +8,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',
     '@thespielplatz/nuxt-auth',
-    '@thespielplatz/nuxt-dev-base',
     '@logto/nuxt',
   ],
   devtools: { enabled: true },

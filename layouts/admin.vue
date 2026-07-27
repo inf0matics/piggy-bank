@@ -77,8 +77,9 @@ const navItems = [
 const { data: me } = await useFetch<{ sub: string, name?: string, username?: string, email?: string }>('/api/admin/me')
 const displayName = computed(() => me.value?.name || me.value?.username || me.value?.email || 'Unknown')
 
-// GitHub link + version, sourced from the same @thespielplatz/nuxt-dev-base
-// runtime config the site footer (FooterGithubLink/FooterVersionBadge) uses.
+// GitHub link + version, sourced from the same runtimeConfig.public.devBase
+// (set by modules/dev-base.ts) the site footer (FooterGithubLink/
+// FooterVersionBadge) uses.
 const devBase = useRuntimeConfig().public.devBase as {
   githubLink?: string
   version?: string

@@ -31,4 +31,27 @@
   --color-dodgerblue-800: #2853a5;
   --color-dodgerblue-900: #254883;
   --color-dodgerblue-950: #1b2d50;
+
+  /*
+   * `footer` colour scale (neutral gray) used by the footer components in
+   * components/footer/. Registered as a Nuxt UI colour in nuxt.config.ts
+   * (ui.theme.colors). Formerly injected by @thespielplatz/nuxt-dev-base.
+   */
+  --color-footer-50: #f9fafb;
+  --color-footer-100: #f3f4f6;
+  --color-footer-200: #e5e7eb;
+  --color-footer-300: #d1d5db;
+  --color-footer-400: #9ca3af;
+  --color-footer-500: #6b7280;
+  --color-footer-600: #4b5563;
+  --color-footer-700: #374151;
+  --color-footer-800: #1f2937;
+  --color-footer-900: #111827;
+  --color-footer-950: #030712;
+}
+
+/* Nuxt UI semantic aliases for the `footer` colour (used via color="footer"). */
+:root {
+  --ui-footer: var(--color-footer-500);
+  --ui-footer-hover: var(--color-footer-800);
 }
