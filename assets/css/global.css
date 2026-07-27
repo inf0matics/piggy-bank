@@ -3,3 +3,13 @@ html, body {
   touch-action: none; /* Prevents drag gestures */
   xoverflow: hidden;
 }
+
+/*
+ * Content pages (e.g. the privacy policy) opt back into vertical scrolling —
+ * the app is otherwise a fixed-viewport mobile UI. The page adds `allow-scroll`
+ * to <html> via useHead; Nuxt removes it again when navigating away.
+ */
+html.allow-scroll,
+html.allow-scroll body {
+  touch-action: pan-y;
+}
