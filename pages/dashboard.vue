@@ -62,7 +62,7 @@ const payment = ref<{ sats: number, comment: string | null, time: number } | nul
 let firstTime = true
 let lastSatsValue = 0
 
-let intervalId: NodeJS.Timeout | null = null
+let intervalId: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   await $auth.redirectIfLoggedOut()
@@ -99,10 +99,11 @@ const fetchData = async () => {
       method: 'GET',
     })
   } catch (error) {
+    const err = error as { statusMessage?: string }
     if (firstTime) {
       toast.add({
         title: 'Error',
-        description: error.statusMessage,
+        description: err.statusMessage,
         icon: 'i-heroicons-x-circle-16-solid',
         color: 'error',
         duration: 60 * 1000,
@@ -110,7 +111,7 @@ const fetchData = async () => {
       })
       stopPolling()
       console.error(error)
-      piggyValueRef.value?.showError(error.statusMessage)
+      piggyValueRef.value?.showError(err.statusMessage ?? 'Unknown error')
       firstTime = false
       return
     }

@@ -140,6 +140,10 @@
 </template>
 
 <script setup lang="ts">
+// Explicit import (a Nuxt auto-import at runtime): vue-tsc does not resolve
+// auto-imported utils in template scope, only in <script>.
+import formatTime from '~/utils/formatTime'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',

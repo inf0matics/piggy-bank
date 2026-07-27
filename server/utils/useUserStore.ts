@@ -71,7 +71,7 @@ export const countUsers = (): number => {
 export const getUsersByOwner = (owner: string): UserSchema[] => {
   const rows = getDb()
     .prepare('SELECT * FROM users WHERE owner = ? ORDER BY name COLLATE NOCASE')
-    .all(owner) as UserRow[]
+    .all(owner) as unknown as UserRow[]
   return rows.map(rowToUser)
 }
 

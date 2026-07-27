@@ -1,4 +1,4 @@
-import consola from 'consola'
+import { consola } from 'consola'
 
 // Keep in sync with the `cookieEncryptionKey` fallback in nuxt.config.ts.
 const FALLBACK_COOKIE_KEY = 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY'

@@ -17,8 +17,8 @@ export default defineEventHandler(async (event) => {
       const lnurlPs = await lnbits.getLnurlPs()
       if (lnurlPs && lnurlPs.length > 0) {
         lnurlpActive = true
-        lnurl = lnurlPs[0].lnurl ?? null
-        if (lnurlPs[0].username) {
+        lnurl = lnurlPs[0]?.lnurl ?? null
+        if (lnurlPs[0]?.username) {
           address = `${lnurlPs[0].username}@${new URL(user.lnbits.url).hostname}`
         }
       }

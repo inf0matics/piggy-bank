@@ -7,6 +7,27 @@ on:
     branches: [main]
 
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      # `npm ci` runs the `postinstall` hook (nuxt prepare), which generates the
+      # .nuxt types that both lint and typecheck depend on.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
   e2e:
     runs-on: ubuntu-latest
     steps:

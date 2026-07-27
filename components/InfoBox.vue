@@ -54,6 +54,10 @@
 </template>
 
 <script setup lang="ts">
+// Explicit imports (these are Nuxt auto-imports at runtime): vue-tsc does not
+// resolve auto-imported utils in template scope, only in <script>.
+import formatTime from '~/utils/formatTime'
+import formatSats from '~/utils/formatSats'
 
 const isOpen = ref(false)
 const { lnurl, address, payment } = defineProps<{

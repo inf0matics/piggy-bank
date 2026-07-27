@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { defineNuxtModule } from '@nuxt/kit'
 import defu from 'defu'
-import consola from 'consola'
+import { consola } from 'consola'
 
 // Local replacement for the version/GitHub-link slice of the former
 // @thespielplatz/nuxt-dev-base module. Reads package.json at build time and

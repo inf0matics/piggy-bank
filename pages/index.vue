@@ -140,7 +140,6 @@ const backspaceAction = () => {
 const login = async () => {
   const success = await $auth.loginWithAccessKey(code.value)
   code.value = ''
-  status.value = ''
   if (success) {
     await navigateTo('/dashboard')
   } else {

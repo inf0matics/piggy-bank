@@ -20,7 +20,7 @@ const PaymentItem = z.object({
   time: z
     .string()
     .transform((val) => {
-      const [datePart] = val.split('.')
+      const [datePart = ''] = val.split('.')
       return new Date(datePart).getTime() / 1000
     })
     .describe('Transaction time'),
@@ -69,14 +69,15 @@ export default class LnBits {
 
     const json = await response.json()
     const data = PaymentResponse.parse(json)
-    if (data.length == 0) {
+    const first = data[0]
+    if (!first) {
       return null
     }
-    const comment = data[0].extra.comment || data[0].memo || null
+    const comment = first.extra.comment || first.memo || null
     return {
-      amount: data[0].amount,
+      amount: first.amount,
       comment,
-      time: data[0].time,
+      time: first.time,
     }
   }
 

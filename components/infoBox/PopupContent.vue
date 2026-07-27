@@ -20,20 +20,20 @@
     </template>
     <div class="pb-4 flex items-center justify-center">
       <h4 class="font-semibold text-gray-900 dark:text-white text-center">
-        {{ tabs && tabs.length > tabIndex ? tabs[tabIndex].title : '' }}
+        {{ tabs && tabs.length > tabIndex ? tabs[tabIndex]?.title : '' }}
       </h4>
       <UButton
         color="neutral"
         variant="ghost"
         icon="i-mdi-clipboard-multiple-outline"
-        @click="copyToClipboard(tabs[tabIndex].qrCode || '')"
+        @click="copyToClipboard(tabs[tabIndex]?.qrCode || '')"
       />
     </div>
-    <div v-if="tabs && tabs.length > tabIndex ? tabs[tabIndex].qrCode : ''">
+    <div v-if="tabs && tabs.length > tabIndex ? tabs[tabIndex]?.qrCode : ''">
       <!-- eslint-disable vue/no-v-html -->
       <div
         class="flex justify-center"
-        v-html="createQrCode(tabs[tabIndex].qrCode || '')"
+        v-html="createQrCode(tabs[tabIndex]?.qrCode || '')"
       />
       <!-- eslint-enable vue/no-v-html -->
     </div>
