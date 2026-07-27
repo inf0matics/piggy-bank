@@ -1,6 +1,37 @@
 # Changelog
 
 
+## v1.16.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.15.0...v1.16.0)
+
+### 🚀 Enhancements
+
+- Link Imprint to tsp.tools/imprint and add an in-app Privacy Policy page ([5e7bbf6](https://github.com/inf0matics/piggy-bank/commit/5e7bbf6))
+
+### 🩹 Fixes
+
+- Make nuxt typecheck pass and add it to the CI gate ([8f78727](https://github.com/inf0matics/piggy-bank/commit/8f78727))
+- **ui:** Restore container/button app.config overrides in Nuxt UI v4 shape ([5c31f49](https://github.com/inf0matics/piggy-bank/commit/5c31f49))
+- **dashboard:** Make the piggy panel responsive ([d47161c](https://github.com/inf0matics/piggy-bank/commit/d47161c))
+
+### 💅 Refactors
+
+- Drop @thespielplatz/nuxt-dev-base, reimplement used parts in-repo ([fcbf72c](https://github.com/inf0matics/piggy-bank/commit/fcbf72c))
+
+### ✅ Tests
+
+- **dashboard:** Harden the flaky sats-balance assertion ([ec53afb](https://github.com/inf0matics/piggy-bank/commit/ec53afb))
+
+### 🎨 Styles
+
+- Polish public area (states, tabular figures, 404, privacy page) ([79d4ef3](https://github.com/inf0matics/piggy-bank/commit/79d4ef3))
+- **footer:** Redesign into a cohesive branded footer ([66741b8](https://github.com/inf0matics/piggy-bank/commit/66741b8))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.15.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.14.1...v1.15.0)
