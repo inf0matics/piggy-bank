@@ -9,6 +9,7 @@ export interface MockState {
   lnurl?: string | null
   rate?: number // BTC/EUR
   payment?: { sats: number, comment?: string | null } | null
+  reachable?: boolean // false: LNBits endpoints drop the connection
 }
 
 const post = async (path: string, body?: unknown) => {

@@ -11,7 +11,7 @@
 //
 // Plus a test-only control API (NOT part of the real LNBits API):
 //   POST /test/reset              -> restore default state
-//   POST /test/set                -> override state fields { balance, lnurl, username, payment }
+//   POST /test/set                -> override state fields { balance, lnurl, username, payment, reachable }
 //   POST /test/payment            -> simulate an incoming payment { sats, comment }
 //   GET  /health                  -> liveness probe
 //
@@ -31,6 +31,9 @@ const defaultState = () => ({
   lastPayment: null,
   // BTC/EUR rate served via the Kraken-shaped ticker endpoint.
   rateEur: 50_000,
+  // false: the LNBits endpoints drop the connection (LNBits is down). The Kraken
+  // ticker stays up — in production it is a separate service.
+  reachable: true,
 })
 
 let state = defaultState()
@@ -76,9 +79,19 @@ const paymentList = () => {
   ]
 }
 
+const LNBITS_ROUTES = new Set([
+  'GET /api/v1/wallet',
+  'GET /lnurlp/api/v1/links',
+  'GET /api/v1/payments',
+])
+
 const server = createServer(async (req, res) => {
   const { pathname } = new URL(req.url, 'http://localhost')
   const route = `${req.method} ${pathname}`
+
+  if (!state.reachable && LNBITS_ROUTES.has(route)) {
+    return req.socket.destroy()
+  }
 
   switch (route) {
     // --- liveness ---
@@ -122,6 +135,7 @@ const server = createServer(async (req, res) => {
       if (body.username !== undefined) state.username = body.username
       if (body.lnurl !== undefined) state.lnurl = body.lnurl
       if (body.rate !== undefined) state.rateEur = Number(body.rate)
+      if (body.reachable !== undefined) state.reachable = Boolean(body.reachable)
       if (body.payment !== undefined) {
         state.lastPayment = body.payment
           ? {
