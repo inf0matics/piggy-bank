@@ -43,15 +43,19 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     })
   }
 
-  let lnurlPs: Awaited<ReturnType<LnBits['getLnurlPs']>>
-  let lastLnbitsPayment: Awaited<ReturnType<LnBits['getLastPayment']>>
-  try {
-    [lnurlPs, lastLnbitsPayment] = await Promise.all([lnbits.getLnurlPs(), lnbits.getLastPayment()])
-  } catch (error) {
-    // LNBits went away between the calls.
-    if (error instanceof LnBitsUnreachableError) return unavailable()
-    throw error
+  // The balance answered, so LNBits is up. A failing LNURL-p extension only
+  // means no deposit option; an unreachable payments call means LNBits just
+  // went away.
+  const [links, last] = await Promise.allSettled([lnbits.getLnurlPs(), lnbits.getLastPayment()])
+  if (last.status === 'rejected') {
+    if (last.reason instanceof LnBitsUnreachableError) return unavailable()
+    throw last.reason
   }
+  if (links.status === 'rejected' && !(links.reason instanceof LnBitsUnreachableError)) {
+    throw links.reason
+  }
+  const lnurlPs = links.status === 'fulfilled' ? links.value : null
+  const lastLnbitsPayment = last.value
   const sats = Math.floor(lnbitsBalance / 1000)
 
   const btc = sats / 100_000_000

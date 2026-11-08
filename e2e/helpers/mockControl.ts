@@ -10,6 +10,8 @@ export interface MockState {
   rate?: number // BTC/EUR
   payment?: { sats: number, comment?: string | null } | null
   reachable?: boolean // false: LNBits endpoints drop the connection
+  hang?: boolean // true: LNBits endpoints never answer
+  lnurlpStatus?: number | null // e.g. 500: the LNURL-p extension fails, the wallet works
 }
 
 const post = async (path: string, body?: unknown) => {

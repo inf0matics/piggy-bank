@@ -123,3 +123,47 @@ test('the dashboard switches to unavailable when LNBits goes away mid-session', 
   await setMockState({ reachable: true })
   await expect(page.getByTestId('sats-balance')).toHaveText(DEFAULT_BALANCE, { timeout: 15_000 })
 })
+
+test('a hung LNBits times out: the dashboard shows unavailable and polls one request at a time', async ({ page }) => {
+  let inFlight = 0
+  let maxInFlight = 0
+  const isDashboardCall = (url: string) => new URL(url).pathname === '/api/dashboard'
+  page.on('request', (request) => {
+    if (!isDashboardCall(request.url())) return
+    inFlight++
+    maxInFlight = Math.max(maxInFlight, inFlight)
+  })
+  const settled = (request: { url: () => string }) => {
+    if (isDashboardCall(request.url())) inFlight--
+  }
+  page.on('requestfinished', settled)
+  page.on('requestfailed', settled)
+
+  await setMockState({ hang: true })
+  await login(page)
+
+  // LNBits never answers; the app gives up after its timeout instead of hanging.
+  await expect(page.getByTestId('sats-balance')).toHaveText('Balance currently unavailable', { timeout: 10_000 })
+  // Each poll waits out the timeout (longer than the poll interval): they must not overlap.
+  await page.waitForTimeout(7_000)
+  expect(maxInFlight).toBe(1)
+})
+
+test('a failing LNURL-p extension does not hide the balance', async ({ page }) => {
+  await setMockState({ lnurlpStatus: 500 })
+  await login(page)
+
+  await expect(page.getByTestId('sats-balance')).toHaveText(DEFAULT_BALANCE, { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
+
+  await loginAsAdmin(page)
+  await page.goto('/admin/piggy-banks')
+  await expect(row(page, 'Test').locator('[data-lnurlp="inactive"]')).toBeVisible()
+})
+
+test('the status of another custodian\'s piggy bank is not served', async ({ page }) => {
+  await loginAsAdmin(page)
+  // "Foreign" (seed id other-owner-user) belongs to a different custodian.
+  const response = await page.request.get('/api/admin/piggy-banks/other-owner-user/status')
+  expect(response.status()).toBe(404)
+})

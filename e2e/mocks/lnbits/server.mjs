@@ -11,7 +11,7 @@
 //
 // Plus a test-only control API (NOT part of the real LNBits API):
 //   POST /test/reset              -> restore default state
-//   POST /test/set                -> override state fields { balance, lnurl, username, payment, reachable }
+//   POST /test/set                -> override state fields { balance, lnurl, username, payment, reachable, hang, lnurlpStatus }
 //   POST /test/payment            -> simulate an incoming payment { sats, comment }
 //   GET  /health                  -> liveness probe
 //
@@ -34,6 +34,10 @@ const defaultState = () => ({
   // false: the LNBits endpoints drop the connection (LNBits is down). The Kraken
   // ticker stays up — in production it is a separate service.
   reachable: true,
+  // true: the LNBits endpoints accept the request and never answer (hung LNBits).
+  hang: false,
+  // A status code (e.g. 500): the LNURL-p extension fails while the wallet works.
+  lnurlpStatus: null,
 })
 
 let state = defaultState()
@@ -89,8 +93,9 @@ const server = createServer(async (req, res) => {
   const { pathname } = new URL(req.url, 'http://localhost')
   const route = `${req.method} ${pathname}`
 
-  if (!state.reachable && LNBITS_ROUTES.has(route)) {
-    return req.socket.destroy()
+  if (LNBITS_ROUTES.has(route)) {
+    if (!state.reachable) return req.socket.destroy()
+    if (state.hang) return
   }
 
   switch (route) {
@@ -107,6 +112,9 @@ const server = createServer(async (req, res) => {
       })
 
     case 'GET /lnurlp/api/v1/links':
+      if (state.lnurlpStatus) {
+        return send(res, state.lnurlpStatus, { detail: 'mock LNURL-p error' })
+      }
       // A specific invoice key always reports "no LNURL-p", so the admin list
       // can exercise the inactive-badge path independent of global mock state.
       if (req.headers['x-api-key'] === 'no-lnurlp-key') {
@@ -136,6 +144,8 @@ const server = createServer(async (req, res) => {
       if (body.lnurl !== undefined) state.lnurl = body.lnurl
       if (body.rate !== undefined) state.rateEur = Number(body.rate)
       if (body.reachable !== undefined) state.reachable = Boolean(body.reachable)
+      if (body.hang !== undefined) state.hang = Boolean(body.hang)
+      if (body.lnurlpStatus !== undefined) state.lnurlpStatus = body.lnurlpStatus === null ? null : Number(body.lnurlpStatus)
       if (body.payment !== undefined) {
         state.lastPayment = body.payment
           ? {

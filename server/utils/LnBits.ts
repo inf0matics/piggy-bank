@@ -35,8 +35,8 @@ const PaymentResponse = z.array(PaymentItem)
 const DEFAULT_TIMEOUT_MS = 3_000
 
 /**
- * LNBits could not be reached: network failure, timeout, or a 5xx from LNBits
- * or its proxy. Distinct from LNBits answering with a refusal (e.g. a 4xx for a
+ * LNBits could not be reached: network failure, timeout, a 5xx, or a non-JSON
+ * error page from its proxy. Distinct from LNBits answering with a refusal (e.g. a 4xx for a
  * bad invoice key), which stays a plain Error.
  */
 export class LnBitsUnreachableError extends Error {
@@ -113,7 +113,11 @@ export default class LnBits {
     } catch (error) {
       throw new LnBitsUnreachableError(this.url, { cause: error })
     }
-    if (response.status >= 500) {
+    // LNBits answers JSON, errors included. A 5xx, or a 4xx that is not JSON
+    // (e.g. a reverse proxy's "404 page not found" once LNBits is removed),
+    // means LNBits itself is not there.
+    const isJson = response.headers.get('content-type')?.includes('application/json') ?? false
+    if (response.status >= 500 || (!response.ok && !isJson)) {
       throw new LnBitsUnreachableError(this.url, { cause: new Error(`${response.status} ${response.statusText}`) })
     }
     return { ok: response.ok, status: response.status, statusText: response.statusText, text }

@@ -33,8 +33,12 @@ describe('LnBits when LNBits is unreachable', () => {
     globalThis.fetch = realFetch
   })
 
+  // LNBits itself always answers JSON, errors included.
   const respondWith = (status: number, body: unknown = {}) => {
-    globalThis.fetch = async () => new Response(JSON.stringify(body), { status })
+    globalThis.fetch = async () => new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const lnbits = new LnBits({ apiKey: 'k', url: 'http://lnbits.test' })
@@ -73,6 +77,16 @@ describe('LnBits when LNBits is unreachable', () => {
 
   it('reports a 5xx answer (LNBits down behind its proxy) as unreachable', async () => {
     respondWith(502)
+    await assert.rejects(lnbits.getBalance(), LnBitsUnreachableError)
+    await assert.rejects(lnbits.getLnurlPs(), LnBitsUnreachableError)
+    await assert.rejects(lnbits.getLastPayment(), LnBitsUnreachableError)
+  })
+
+  it('reports a non-JSON 4xx (proxy page for a removed LNBits) as unreachable', async () => {
+    globalThis.fetch = async () => new Response('404 page not found', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    })
     await assert.rejects(lnbits.getBalance(), LnBitsUnreachableError)
     await assert.rejects(lnbits.getLnurlPs(), LnBitsUnreachableError)
     await assert.rejects(lnbits.getLastPayment(), LnBitsUnreachableError)

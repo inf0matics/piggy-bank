@@ -16,7 +16,9 @@ export default defineEventHandler(async (event) => {
   const lnbits = new LnBits({ apiKey: user.lnbits.invoiceKey, url: user.lnbits.url })
   const [links, last] = await Promise.allSettled([lnbits.getLnurlPs(), lnbits.getLastPayment()])
 
-  if ([links, last].some(r => r.status === 'rejected' && r.reason instanceof LnBitsUnreachableError)) {
+  // Reachability is decided by the wallet's payments call: a failing LNURL-p
+  // extension on a working LNBits just reads "inactive".
+  if (last.status === 'rejected' && last.reason instanceof LnBitsUnreachableError) {
     return { lnurlp: 'unreachable' as const, lnurl: null, address: null, lastPaymentTime: null }
   }
 
