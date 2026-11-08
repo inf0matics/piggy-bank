@@ -38,8 +38,7 @@
         </NuxtLink>
         <div class="flex items-center gap-1 mt-0.5 text-[11px] text-dimmed">
           <UIcon name="i-tabler-clock" />
-          <span v-if="pb.lastPaymentTime">Last tx {{ formatTime(pb.lastPaymentTime) }}</span>
-          <span v-else>No transactions yet</span>
+          <span>{{ lastTxText(statuses.get(pb.id)) }}</span>
         </div>
       </div>
 
@@ -58,30 +57,30 @@
       </div>
 
       <div
-        :data-lnurlp="pb.lnurlpActive ? 'active' : 'inactive'"
-        :aria-label="`LNURL-p ${pb.lnurlpActive ? 'active' : 'inactive'}`"
+        :data-lnurlp="stateOf(pb.id)"
+        :aria-label="BADGES[stateOf(pb.id)].ariaLabel"
         class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
-        :class="pb.lnurlpActive ? 'bg-success/15 text-success' : 'bg-accented text-muted'"
+        :class="BADGES[stateOf(pb.id)].pill"
       >
         <span
           class="w-1.5 h-1.5 rounded-full"
-          :class="pb.lnurlpActive ? 'bg-success' : 'bg-[#6d6e70]'"
+          :class="BADGES[stateOf(pb.id)].dot"
         />
-        LNURL-p
+        {{ BADGES[stateOf(pb.id)].label }}
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
         <UTooltip
-          :text="pb.lnurlpActive ? 'Show deposit QR code' : 'No LNURLp configured'"
+          :text="BADGES[stateOf(pb.id)].depositHint"
           :delay-duration="0"
         >
           <button
             type="button"
             aria-label="Deposit"
-            :aria-disabled="!pb.lnurlpActive"
+            :aria-disabled="stateOf(pb.id) !== 'active'"
             class="w-7 h-7 flex items-center justify-center rounded-md"
-            :class="pb.lnurlpActive ? 'text-muted hover:bg-primary/10 hover:text-primary' : 'text-dimmed cursor-not-allowed'"
-            @click="pb.lnurlpActive && openDeposit(pb)"
+            :class="stateOf(pb.id) === 'active' ? 'text-muted hover:bg-primary/10 hover:text-primary' : 'text-dimmed cursor-not-allowed'"
+            @click="openDeposit(pb.id)"
           >
             <UIcon name="i-tabler-qrcode" />
           </button>
@@ -129,9 +128,9 @@
     <UModal v-model:open="depositOpen">
       <template #content>
         <InfoBoxPopupContent
-          :key="depositTarget?.id"
-          :lnurl="depositTarget?.lnurl ?? ''"
-          :address="depositTarget?.address ?? ''"
+          :key="depositId ?? ''"
+          :lnurl="depositStatus?.lnurl ?? ''"
+          :address="depositStatus?.address ?? ''"
           @close="depositOpen = false"
         />
       </template>
@@ -154,7 +153,12 @@ interface PiggyBankListItem {
   name: string
   accessKey: string
   lnbitsUrl: string
-  lnurlpActive: boolean
+}
+
+type LnurlpState = 'checking' | 'active' | 'inactive' | 'unreachable'
+
+interface PiggyBankStatus {
+  lnurlp: Exclude<LnurlpState, 'checking'>
   lnurl: string | null
   address: string | null
   lastPaymentTime: number | null
@@ -163,6 +167,38 @@ interface PiggyBankListItem {
 const { data: piggyBanks, refresh } = await useFetch<PiggyBankListItem[]>('/api/admin/piggy-banks', {
   default: () => [],
 })
+
+// LNBits state per row, loaded after the list renders — one request per row, so
+// a slow or dead LNBits only holds up its own row.
+const statuses = reactive(new Map<string, PiggyBankStatus>())
+const UNREACHABLE: PiggyBankStatus = { lnurlp: 'unreachable', lnurl: null, address: null, lastPaymentTime: null }
+
+const loadStatus = async (id: string) => {
+  try {
+    statuses.set(id, await $fetch<PiggyBankStatus>(`/api/admin/piggy-banks/${id}/status`))
+  } catch {
+    statuses.set(id, UNREACHABLE)
+  }
+}
+
+onMounted(() => {
+  for (const pb of piggyBanks.value) loadStatus(pb.id)
+})
+
+const stateOf = (id: string): LnurlpState => statuses.get(id)?.lnurlp ?? 'checking'
+
+const BADGES: Record<LnurlpState, { label: string, ariaLabel: string, pill: string, dot: string, depositHint: string }> = {
+  checking: { label: 'LNURL-p', ariaLabel: 'LNURL-p checking', pill: 'bg-accented text-dimmed', dot: 'bg-[#6d6e70] animate-pulse', depositHint: 'Checking LNBits…' },
+  active: { label: 'LNURL-p', ariaLabel: 'LNURL-p active', pill: 'bg-success/15 text-success', dot: 'bg-success', depositHint: 'Show deposit QR code' },
+  inactive: { label: 'LNURL-p', ariaLabel: 'LNURL-p inactive', pill: 'bg-accented text-muted', dot: 'bg-[#6d6e70]', depositHint: 'No LNURLp configured' },
+  unreachable: { label: 'Unreachable', ariaLabel: 'LNBits unreachable', pill: 'bg-error/15 text-error', dot: 'bg-error', depositHint: 'LNBits unreachable' },
+}
+
+const lastTxText = (status: PiggyBankStatus | undefined): string => {
+  if (!status) return 'Checking…'
+  if (status.lnurlp === 'unreachable') return 'Last tx unknown'
+  return status.lastPaymentTime ? `Last tx ${formatTime(status.lastPaymentTime)}` : 'No transactions yet'
+}
 
 const revealed = reactive(new Set<string>())
 const togglePin = (id: string) => {
@@ -182,9 +218,11 @@ const hostOf = (url: string): string => {
 }
 
 const depositOpen = ref(false)
-const depositTarget = ref<PiggyBankListItem | null>(null)
-const openDeposit = (pb: PiggyBankListItem) => {
-  depositTarget.value = pb
+const depositId = ref<string | null>(null)
+const depositStatus = computed(() => depositId.value ? statuses.get(depositId.value) : undefined)
+const openDeposit = (id: string) => {
+  if (stateOf(id) !== 'active') return
+  depositId.value = id
   depositOpen.value = true
 }
 

@@ -1,9 +1,12 @@
 import z from 'zod'
 import type { UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
-import LnBits from '~/server/utils/LnBits'
+import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
 
-export const DashboardDto = z.object({
+// `available: false` — LNBits cannot be reached right now. Not an error: the
+// dashboard says so and keeps polling until LNBits is back.
+export const DashboardDto = z.discriminatedUnion('available', [z.object({
+  available: z.literal(true),
   name: z.string(),
   sats: z.number(),
   eur: z.number(),
@@ -15,7 +18,10 @@ export const DashboardDto = z.object({
     comment: z.string().nullable(),
     time: z.number(),
   }).nullable(),
-})
+}), z.object({
+  available: z.literal(false),
+  name: z.string(),
+})])
 export type DashboardDto = z.infer<typeof DashboardDto>
 
 export default defineLoggedInEventHandler(async (event, authUser) => {
@@ -24,17 +30,28 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     apiKey: user.lnbits.invoiceKey,
     url: user.lnbits.url,
   })
+  const unavailable = () => DashboardDto.parse({ available: false, name: user.name })
+
   let lnbitsBalance: number
   try {
     lnbitsBalance = await lnbits.getBalance()
-  } catch {
+  } catch (error) {
+    if (error instanceof LnBitsUnreachableError) return unavailable()
     throw createError({
       statusCode: 500,
       statusMessage: 'Error fetching lnbits balance. Please check invoice key!',
     })
   }
-  const lnurlPs = await lnbits.getLnurlPs()
-  const lastLnbitsPayment = await lnbits.getLastPayment()
+
+  let lnurlPs: Awaited<ReturnType<LnBits['getLnurlPs']>>
+  let lastLnbitsPayment: Awaited<ReturnType<LnBits['getLastPayment']>>
+  try {
+    [lnurlPs, lastLnbitsPayment] = await Promise.all([lnbits.getLnurlPs(), lnbits.getLastPayment()])
+  } catch (error) {
+    // LNBits went away between the calls.
+    if (error instanceof LnBitsUnreachableError) return unavailable()
+    throw error
+  }
   const sats = Math.floor(lnbitsBalance / 1000)
 
   const btc = sats / 100_000_000
@@ -61,6 +78,7 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
   }
 
   return DashboardDto.parse({
+    available: true,
     name: user.name,
     sats,
     eur,

@@ -28,6 +28,7 @@
           :sats="sats"
           :eur="eur"
           :rate="rate"
+          :unavailable="unavailable"
         />
       </div>
     </div>
@@ -62,6 +63,7 @@ const sats = ref(-1)
 const title = ref('')
 const rate = ref(0)
 const eur = ref(0)
+const unavailable = ref(false)
 
 const payment = ref<{ sats: number, comment: string | null, time: number } | null>(null)
 
@@ -69,6 +71,8 @@ let firstTime = true
 let lastSatsValue = 0
 
 let intervalId: ReturnType<typeof setInterval> | null = null
+// One request at a time: while LNBits is slow to fail, polls must not pile up.
+let fetching = false
 
 onMounted(async () => {
   await $auth.redirectIfLoggedOut()
@@ -99,6 +103,16 @@ const stopPolling = () => {
 }
 
 const fetchData = async () => {
+  if (fetching) return
+  fetching = true
+  try {
+    await fetchDashboard()
+  } finally {
+    fetching = false
+  }
+}
+
+const fetchDashboard = async () => {
   let response
   try {
     response = await $auth.$fetch('/api/dashboard', {
@@ -136,6 +150,16 @@ const fetchData = async () => {
 
   title.value = `${response.name}'s`
   lastUpdate.value = formatTime()
+
+  // LNBits is unreachable: say so and keep polling until it is back.
+  unavailable.value = !response.available
+  if (!response.available) {
+    infoBoxRef.value?.closePopup()
+    lnurl.value = ''
+    address.value = ''
+    payment.value = null
+    return
+  }
   lnurl.value = response.lnurl || ''
   address.value = response.address || ''
   payment.value = response.payment
