@@ -22,7 +22,7 @@
     </p>
 
     <div
-      v-for="pb in piggyBanks"
+      v-for="pb in rows"
       :key="pb.id"
       data-testid="pb-row"
       class="flex items-center gap-3 bg-elevated rounded-[10px] border border-default px-4 py-3 mb-2.5"
@@ -38,7 +38,7 @@
         </NuxtLink>
         <div class="flex items-center gap-1 mt-0.5 text-[11px] text-dimmed">
           <UIcon name="i-tabler-clock" />
-          <span>{{ lastTxText(statuses.get(pb.id)) }}</span>
+          <span>{{ pb.lastTx }}</span>
         </div>
       </div>
 
@@ -57,29 +57,29 @@
       </div>
 
       <div
-        :data-lnurlp="stateOf(pb.id)"
-        :aria-label="BADGES[stateOf(pb.id)].ariaLabel"
+        :data-lnurlp="pb.state"
+        :aria-label="pb.badge.ariaLabel"
         class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0"
-        :class="BADGES[stateOf(pb.id)].pill"
+        :class="pb.badge.pill"
       >
         <span
           class="w-1.5 h-1.5 rounded-full"
-          :class="BADGES[stateOf(pb.id)].dot"
+          :class="pb.badge.dot"
         />
-        {{ BADGES[stateOf(pb.id)].label }}
+        {{ pb.badge.label }}
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
         <UTooltip
-          :text="BADGES[stateOf(pb.id)].depositHint"
+          :text="pb.badge.depositHint"
           :delay-duration="0"
         >
           <button
             type="button"
             aria-label="Deposit"
-            :aria-disabled="stateOf(pb.id) !== 'active'"
+            :aria-disabled="pb.state !== 'active'"
             class="w-7 h-7 flex items-center justify-center rounded-md"
-            :class="stateOf(pb.id) === 'active' ? 'text-muted hover:bg-primary/10 hover:text-primary' : 'text-dimmed cursor-not-allowed'"
+            :class="pb.state === 'active' ? 'text-muted hover:bg-primary/10 hover:text-primary' : 'text-dimmed cursor-not-allowed'"
             @click="openDeposit(pb.id)"
           >
             <UIcon name="i-tabler-qrcode" />
@@ -185,8 +185,6 @@ onMounted(() => {
   for (const pb of piggyBanks.value) loadStatus(pb.id)
 })
 
-const stateOf = (id: string): LnurlpState => statuses.get(id)?.lnurlp ?? 'checking'
-
 const BADGES: Record<LnurlpState, { label: string, ariaLabel: string, pill: string, dot: string, depositHint: string }> = {
   checking: { label: 'LNURL-p', ariaLabel: 'LNURL-p checking', pill: 'bg-accented text-dimmed', dot: 'bg-[#6d6e70] animate-pulse', depositHint: 'Checking LNBits…' },
   active: { label: 'LNURL-p', ariaLabel: 'LNURL-p active', pill: 'bg-success/15 text-success', dot: 'bg-success', depositHint: 'Show deposit QR code' },
@@ -199,6 +197,12 @@ const lastTxText = (status: PiggyBankStatus | undefined): string => {
   if (status.lnurlp === 'unreachable') return 'Last tx unknown'
   return status.lastPaymentTime ? `Last tx ${formatTime(status.lastPaymentTime)}` : 'No transactions yet'
 }
+
+const rows = computed(() => piggyBanks.value.map((pb) => {
+  const status = statuses.get(pb.id)
+  const state: LnurlpState = status?.lnurlp ?? 'checking'
+  return { ...pb, state, badge: BADGES[state], lastTx: lastTxText(status) }
+}))
 
 const revealed = reactive(new Set<string>())
 const togglePin = (id: string) => {
@@ -221,7 +225,7 @@ const depositOpen = ref(false)
 const depositId = ref<string | null>(null)
 const depositStatus = computed(() => depositId.value ? statuses.get(depositId.value) : undefined)
 const openDeposit = (id: string) => {
-  if (stateOf(id) !== 'active') return
+  if (statuses.get(id)?.lnurlp !== 'active') return
   depositId.value = id
   depositOpen.value = true
 }
