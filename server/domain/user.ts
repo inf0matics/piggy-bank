@@ -16,11 +16,17 @@ export type UserSchema = z.infer<typeof UserSchema>
 
 // Fields the admin UI submits when creating/editing a piggy bank (no id — it is
 // generated on insert).
+// Each field reports the same message whether it is empty, missing or of the
+// wrong type, so the API's 400 always names the field.
+const requiredString = (error: string) => z.string({ error }).trim().min(1, { error })
+
+const lnbitsUrlError = 'A valid LNBits URL is required'
+
 export const UserInputSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required'),
-  accessKey: z.string().trim().min(1, 'PIN is required'),
-  lnbitsUrl: z.string().trim().url('A valid LNBits URL is required'),
-  invoiceKey: z.string().trim().min(1, 'Invoice key is required'),
+  name: requiredString('Name is required'),
+  accessKey: requiredString('PIN is required'),
+  lnbitsUrl: z.string({ error: lnbitsUrlError }).trim().pipe(z.url({ error: lnbitsUrlError })),
+  invoiceKey: requiredString('Invoice key is required'),
 })
 
 export type UserInput = z.infer<typeof UserInputSchema>

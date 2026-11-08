@@ -2,7 +2,7 @@ import { z } from 'zod'
 import LnBits from '~/server/utils/LnBits'
 
 const Body = z.object({
-  lnbitsUrl: z.string().trim().url(),
+  lnbitsUrl: z.string().trim().pipe(z.url()),
   invoiceKey: z.string().trim().min(1),
 })
 
