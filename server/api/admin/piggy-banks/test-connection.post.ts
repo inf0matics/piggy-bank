@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     return { ok: false, error: 'Could not connect — check the URL and invoice key.' }
   }
 
-  let lnurlpActive = false
+  let lnurlpActive: boolean
   try {
     const lnurlPs = await lnbits.getLnurlPs()
     lnurlpActive = !!lnurlPs && lnurlPs.length > 0

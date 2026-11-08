@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       lnurlpActive = false
     }
 
-    let lastPaymentTime: number | null = null
+    let lastPaymentTime: number | null
     try {
       const last = await lnbits.getLastPayment()
       lastPaymentTime = last?.time ?? null

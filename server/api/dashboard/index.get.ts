@@ -24,7 +24,7 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     apiKey: user.lnbits.invoiceKey,
     url: user.lnbits.url,
   })
-  let lnbitsBalance = 0
+  let lnbitsBalance: number
   try {
     lnbitsBalance = await lnbits.getBalance()
   } catch {
