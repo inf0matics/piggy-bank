@@ -21,7 +21,7 @@ services:
       - '5001:80'
 
   piggybank:
-    image: node:24-slim
+    image: node:26-slim
     working_dir: /app
     # Install deps, seed the dev DB, then start the dev server bound to 0.0.0.0
     # so it is reachable from the host.

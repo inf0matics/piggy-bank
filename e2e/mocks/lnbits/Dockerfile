@@ -1,5 +1,5 @@
 # Minimal image for the LNBits mock. No dependencies, no build step.
-FROM node:22-slim
+FROM node:26-slim
 
 WORKDIR /app
 COPY server.mjs .
