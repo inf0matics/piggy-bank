@@ -16,11 +16,12 @@ FROM base AS build
 # Install Git if package.json or package-lock.json contains dependencies that require it (e.g., dependencies with 'git+' URLs)
 RUN apt-get update && apt-get install -y git
 
-COPY --link package.json .
-# ERROR  Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try npm i again after removing both package-lock.json and node_modules directory.
-# COPY package-lock.json .
+COPY --link package.json package-lock.json ./
 
-RUN npm install --production=false
+# Install exactly the lockfile's tree (the one the checks ran against). The
+# lockfile carries every platform's native bindings, so npm/cli#4828 no longer
+# bites. --include=dev: NODE_ENV=production would otherwise skip the build tools.
+RUN npm ci --include=dev
 
 COPY --link . .
 
