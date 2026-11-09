@@ -31,6 +31,11 @@
         :sats="balance.sats"
         @changed="emit('changed')"
       />
+      <AdminSwitchBack
+        :piggy-bank-id="piggyBankId"
+        :sats="balance.sats"
+        @changed="emit('changed')"
+      />
     </template>
 
     <template v-else>

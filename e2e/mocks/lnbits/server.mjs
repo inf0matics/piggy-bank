@@ -4,6 +4,7 @@
 //   GET /api/v1/wallet            -> { balance }              (balance in millisats)
 //   GET /lnurlp/api/v1/links      -> [{ username, lnurl }]
 //   GET /api/v1/payments?limit=1  -> [{ amount, memo, extra, time }]
+// The invoice key `invalid-key` is refused (401) on all three, like a wrong key.
 //
 // It also stands in for the Kraken ticker (see server/utils/getKrakenBtcRate.ts),
 // so the app needs no outbound internet during tests:
@@ -98,6 +99,10 @@ const server = createServer(async (req, res) => {
   if (LNBITS_ROUTES.has(route)) {
     if (!state.reachable) return req.socket.destroy()
     if (state.hang) return
+    // A specific invoice key is always refused, as LNBits refuses a wrong key.
+    if (req.headers['x-api-key'] === 'invalid-key') {
+      return send(res, 401, { detail: 'Invalid key' })
+    }
   }
 
   switch (route) {

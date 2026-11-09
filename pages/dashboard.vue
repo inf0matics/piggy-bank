@@ -69,6 +69,8 @@ const payment = ref<{ sats: number, comment: string | null, time: number } | nul
 
 let firstTime = true
 let lastSatsValue = 0
+// The last payment seen, so only a new one is announced.
+let lastPaymentKey = ''
 
 let intervalId: ReturnType<typeof setInterval> | null = null
 // One request at a time: while LNBits is slow to fail, polls must not pile up.
@@ -168,17 +170,23 @@ const fetchDashboard = async () => {
   eur.value = response.eur
   sats.value = response.sats
 
+  const paymentKey = response.payment
+    ? `${response.payment.time}:${response.payment.sats}:${response.payment.comment}`
+    : ''
+
   // The first balance is the baseline, even 0: an empty piggy bank's first
   // top-up is announced like any other.
   if (firstTime) {
     lastSatsValue = response.sats
+    lastPaymentKey = paymentKey
     firstTime = false
   }
 
-  // Only money coming in is announced. A decrease (a manual balance corrected
-  // down) and a change without a payment to show (a manual piggy bank frozen
-  // from a wallet without payments) are not.
-  if (response.sats > lastSatsValue && response.payment && response.payment.sats > 0) {
+  // Only money coming in with a new payment is announced. A decrease (a manual
+  // balance corrected down), a change without a payment to show (a manual
+  // piggy bank frozen from a wallet without payments) and a jump without a new
+  // payment (switched back to an LNBits wallet holding more) are not.
+  if (response.sats > lastSatsValue && response.payment && response.payment.sats > 0 && paymentKey !== lastPaymentKey) {
     infoBoxRef.value?.closePopup()
     toast.add({
       title: response.payment.comment || 'New Payment',
@@ -189,6 +197,7 @@ const fetchDashboard = async () => {
     })
   }
   lastSatsValue = response.sats
+  lastPaymentKey = paymentKey
 }
 
 const logout = async () => {

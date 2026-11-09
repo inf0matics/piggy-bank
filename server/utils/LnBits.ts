@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { WalletRead } from '../../utils/switchBack.ts'
 
 const LnUrlPayItem = z.object({
   username: z.string().nullable(),
@@ -43,6 +44,19 @@ export class LnBitsUnreachableError extends Error {
   constructor(url: string, options?: ErrorOptions) {
     super(`LNBits unreachable: ${url}`, options)
     this.name = 'LnBitsUnreachableError'
+  }
+}
+
+/**
+ * The wallet balance in whole sats, or why LNBits could not give it:
+ * unreachable, or refusing the invoice key (any other failure of a reachable
+ * LNBits).
+ */
+export const readWalletSats = async (wallet: { url: string, invoiceKey: string }): Promise<WalletRead> => {
+  try {
+    return { sats: Math.floor((await new LnBits({ apiKey: wallet.invoiceKey, url: wallet.url }).getBalance()) / 1000) }
+  } catch (error) {
+    return { sats: null, reason: error instanceof LnBitsUnreachableError ? 'unreachable' : 'refused' }
   }
 }
 

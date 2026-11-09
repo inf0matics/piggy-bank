@@ -132,6 +132,24 @@ export const changeOwnedManualBalance = (id: string, owner: string, sats: number
   return result.changes === 0 ? null : getUserById(id)
 }
 
+/**
+ * Puts a manual piggy bank back on LNBits, provided its manual balance is still
+ * `manualSats` (the one the custodian compared). The manual balance and last
+ * change are dropped: LNBits is the balance again. Null when the piggy bank is
+ * not the owner's, not manual, or its manual balance changed.
+ */
+export const switchOwnedUserToLnbits = (id: string, owner: string, manualSats: number): UserSchema | null => {
+  const result = getDb()
+    .prepare(`
+      UPDATE users
+      SET balance_source = 'lnbits', manual_sats = NULL, manual_changed_at = NULL,
+          manual_change_sats = NULL, manual_change_comment = NULL
+      WHERE id = ? AND owner = ? AND balance_source = 'manual' AND manual_sats = ?
+    `)
+    .run(id, owner, manualSats)
+  return result.changes === 0 ? null : getUserById(id)
+}
+
 export const deleteOwnedUser = (id: string, owner: string): boolean => {
   const result = getDb().prepare('DELETE FROM users WHERE id = ? AND owner = ?').run(id, owner)
   return result.changes > 0

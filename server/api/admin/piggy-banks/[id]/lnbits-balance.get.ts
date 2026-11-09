@@ -1,8 +1,9 @@
-import LnBits from '~/server/utils/LnBits'
+import { readWalletSats } from '~/server/utils/LnBits'
 
 // The piggy bank's current LNBits wallet balance, shown to the custodian before
-// he switches it to the manual source. `sats: null` when LNBits cannot give it
-// (unreachable or refusing the key) — he then enters the starting balance.
+// he switches it to the manual source (he then enters the starting balance when
+// LNBits cannot give it) or back to LNBits (refused then). `sats: null` with
+// the `reason` when LNBits is unreachable or refuses the key.
 export default defineEventHandler(async (event) => {
   const admin = requireAdmin(event)
 
@@ -12,10 +13,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
   }
 
-  const lnbits = new LnBits({ apiKey: user.lnbits.invoiceKey, url: user.lnbits.url })
-  try {
-    return { sats: Math.floor((await lnbits.getBalance()) / 1000) }
-  } catch {
-    return { sats: null }
-  }
+  return readWalletSats(user.lnbits)
 })
