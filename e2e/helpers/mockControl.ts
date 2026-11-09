@@ -8,6 +8,7 @@ export interface MockState {
   username?: string | null
   lnurl?: string | null
   rate?: number // BTC/EUR
+  rateAvailable?: boolean // false: the Kraken ticker answers 503
   payment?: { sats: number, comment?: string | null } | null
   reachable?: boolean // false: LNBits endpoints drop the connection
   hang?: boolean // true: LNBits endpoints never answer

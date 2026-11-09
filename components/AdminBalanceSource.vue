@@ -26,6 +26,11 @@
       >
         Last change {{ formatTime(balance.lastChange.time) }}
       </p>
+      <AdminManualBalanceChange
+        :piggy-bank-id="piggyBankId"
+        :sats="balance.sats"
+        @changed="emit('changed')"
+      />
     </template>
 
     <template v-else>

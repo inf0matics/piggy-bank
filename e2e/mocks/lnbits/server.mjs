@@ -11,7 +11,7 @@
 //
 // Plus a test-only control API (NOT part of the real LNBits API):
 //   POST /test/reset              -> restore default state
-//   POST /test/set                -> override state fields { balance, lnurl, username, payment, reachable, hang, lnurlpStatus }
+//   POST /test/set                -> override state fields { balance, lnurl, username, payment, rate, rateAvailable, reachable, hang, lnurlpStatus }
 //   POST /test/payment            -> simulate an incoming payment { sats, comment }
 //   GET  /health                  -> liveness probe
 //
@@ -31,6 +31,8 @@ const defaultState = () => ({
   lastPayment: null,
   // BTC/EUR rate served via the Kraken-shaped ticker endpoint.
   rateEur: 50_000,
+  // false: the ticker answers 503 (no BTC/EUR rate available).
+  rateAvailable: true,
   // false: the LNBits endpoints drop the connection (LNBits is down). The Kraken
   // ticker stays up — in production it is a separate service.
   reachable: true,
@@ -127,6 +129,9 @@ const server = createServer(async (req, res) => {
 
     // --- Kraken ticker (consumed by getKrakenBtcRate) ---
     case 'GET /0/public/Ticker':
+      if (!state.rateAvailable) {
+        return send(res, 503, { error: ['EService:Unavailable'] })
+      }
       return send(res, 200, {
         error: [],
         result: { XXBTZEUR: { c: [String(state.rateEur)] } },
@@ -143,6 +148,7 @@ const server = createServer(async (req, res) => {
       if (body.username !== undefined) state.username = body.username
       if (body.lnurl !== undefined) state.lnurl = body.lnurl
       if (body.rate !== undefined) state.rateEur = Number(body.rate)
+      if (body.rateAvailable !== undefined) state.rateAvailable = Boolean(body.rateAvailable)
       if (body.reachable !== undefined) state.reachable = Boolean(body.reachable)
       if (body.hang !== undefined) state.hang = Boolean(body.hang)
       if (body.lnurlpStatus !== undefined) state.lnurlpStatus = body.lnurlpStatus === null ? null : Number(body.lnurlpStatus)

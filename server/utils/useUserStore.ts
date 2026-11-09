@@ -117,6 +117,21 @@ export const switchOwnedUserToManual = (id: string, owner: string, sats: number,
   return result.changes === 0 ? null : getUserById(id)
 }
 
+/**
+ * Sets a manual piggy bank's balance to `sats` with `change` as its last change.
+ * Null when the piggy bank is not the owner's or not manual.
+ */
+export const changeOwnedManualBalance = (id: string, owner: string, sats: number, change: BalanceChange): UserSchema | null => {
+  const result = getDb()
+    .prepare(`
+      UPDATE users
+      SET manual_sats = ?, manual_changed_at = ?, manual_change_sats = ?, manual_change_comment = ?
+      WHERE id = ? AND owner = ? AND balance_source = 'manual'
+    `)
+    .run(sats, change.time, change.sats, change.comment, id, owner)
+  return result.changes === 0 ? null : getUserById(id)
+}
+
 export const deleteOwnedUser = (id: string, owner: string): boolean => {
   const result = getDb().prepare('DELETE FROM users WHERE id = ? AND owner = ?').run(id, owner)
   return result.changes > 0

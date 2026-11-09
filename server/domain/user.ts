@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { z } from 'zod'
+import { MAX_COMMENT_LENGTH, MAX_SATS } from '../../utils/manualBalanceChange.ts'
 
 const LnBitsSchema = z.object({
   url: z.string(),
@@ -68,8 +69,23 @@ export type UserInput = z.infer<typeof UserInputSchema>
 // the 21M BTC supply.
 const startingSatsError = 'The starting balance must be a whole number of sats, 0 or more'
 export const ManualSwitchInputSchema = z.object({
-  sats: z.number({ error: startingSatsError }).int({ error: startingSatsError }).min(0, { error: startingSatsError }).max(2_100_000_000_000_000, { error: startingSatsError }),
+  sats: z.number({ error: startingSatsError }).int({ error: startingSatsError }).min(0, { error: startingSatsError }).max(MAX_SATS, { error: startingSatsError }),
 })
+
+// Body of a manual balance change, converted from EUR by the admin view at the
+// rate the custodian was shown: `set` the balance to `sats`, or `add` `sats`
+// (negative: subtract). An empty comment is no comment.
+const changeSatsError = 'The change must be a whole number of sats'
+const changeSats = z.number({ error: changeSatsError }).int({ error: changeSatsError }).min(-MAX_SATS, { error: changeSatsError }).max(MAX_SATS, { error: changeSatsError })
+export const ManualBalanceChangeInputSchema = z.object({
+  mode: z.enum(['set', 'add'], { error: 'The change must set or add to the balance' }),
+  sats: changeSats,
+  comment: z.string({ error: 'The comment must be text' })
+    .trim()
+    .max(MAX_COMMENT_LENGTH, { error: `The comment can be at most ${MAX_COMMENT_LENGTH} characters` })
+    .nullish()
+    .transform(comment => comment || null),
+}).refine(change => change.mode === 'add' || change.sats >= 0, { error: 'The balance cannot go below zero', path: ['sats'] })
 
 // SQLite schema for the user store. Keep in sync with the CREATE TABLE in
 // e2e/seed-test-db.mjs (the e2e seeder is standalone and cannot import this

@@ -2,6 +2,7 @@ import z from 'zod'
 import { lnbitsPaymentToChange, type UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
+import { satsToEur } from '~/utils/manualBalanceChange'
 
 // `available: false` — LNBits cannot be reached right now. Not an error: the
 // dashboard says so and keeps polling until LNBits is back.
@@ -29,7 +30,7 @@ type DashboardBalance = Pick<Extract<DashboardDto, { available: true }>, 'sats' 
 
 const available = async (name: string, balance: DashboardBalance) => {
   const rate = await getKrakenBtcRate()
-  const eur = rate === null ? null : Math.round(balance.sats / 100_000_000 * rate * 100) / 100
+  const eur = rate === null ? null : satsToEur(balance.sats, rate)
   return DashboardDto.parse({ available: true, name, ...balance, eur, rate })
 }
 

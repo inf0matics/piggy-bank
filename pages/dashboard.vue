@@ -173,9 +173,10 @@ const fetchDashboard = async () => {
     firstTime = false
   }
 
-  // A balance change without a payment to show (a manual piggy bank frozen
-  // from a wallet without payments) is not announced as one.
-  if (lastSatsValue != response.sats && response.payment) {
+  // Only money coming in is announced. A decrease (a manual balance corrected
+  // down) and a change without a payment to show (a manual piggy bank frozen
+  // from a wallet without payments) are not.
+  if (response.sats > lastSatsValue && response.payment && response.payment.sats > 0) {
     infoBoxRef.value?.closePopup()
     toast.add({
       title: response.payment.comment || 'New Payment',

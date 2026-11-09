@@ -12,11 +12,14 @@ const TickerResponse = z.object({
   }),
 })
 
+// KRAKEN_URL overrides the API base (used to point at the mock in E2E tests).
+const krakenUrl = () => process.env.KRAKEN_URL || 'https://api.kraken.com'
+
 /**
  * The current BTC/EUR rate from Kraken's public ticker, or null when Kraken
  * cannot be reached or answers with anything but a positive rate.
  */
-export const fetchKrakenBtcRate = async (baseUrl: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<number | null> => {
+export const fetchKrakenBtcRate = async (baseUrl = krakenUrl(), timeoutMs = DEFAULT_TIMEOUT_MS): Promise<number | null> => {
   try {
     const response = await fetch(`${baseUrl}/0/public/Ticker?pair=XXBTZEUR`, {
       signal: AbortSignal.timeout(timeoutMs),
@@ -49,8 +52,7 @@ export default async (): Promise<number | null> => {
   }
 
   // Concurrent callers share one fetch.
-  // KRAKEN_URL overrides the API base (used to point at the mock in E2E tests).
-  inFlight ??= fetchKrakenBtcRate(process.env.KRAKEN_URL || 'https://api.kraken.com')
+  inFlight ??= fetchKrakenBtcRate()
     .then((rate) => {
       cached = { rate, at: now }
       return rate

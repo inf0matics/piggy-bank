@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { createPiggyBank, deleteByName, loginAsAdmin, type PiggyBank } from './helpers/admin'
 import { login } from './helpers/login'
 import { resetMock, setMockState } from './helpers/mockControl'
 
@@ -6,30 +7,6 @@ import { resetMock, setMockState } from './helpers/mockControl'
 // switches to Manual (spec admin-10). Each test creates its own piggy bank on the
 // mock (the shared seed users stay on LNBits) and deletes it afterwards. The
 // mock's Kraken ticker serves 1 BTC = 50,000 EUR throughout.
-
-interface PiggyBank {
-  id: string
-  name: string
-}
-
-const loginAsAdmin = (page: Page) => page.context().addCookies([{
-  name: 'e2e_admin',
-  value: '1',
-  domain: '127.0.0.1',
-  path: '/',
-}])
-
-const createPiggyBank = (page: Page, name: string, accessKey: string) =>
-  page.request.post('/api/admin/piggy-banks', {
-    data: { name, accessKey, lnbitsUrl: 'http://lnbits-mock', invoiceKey: 'test-invoice-key' },
-  }).then(r => r.json()) as Promise<PiggyBank>
-
-const deleteByName = async (page: Page, name: string) => {
-  const list = await page.request.get('/api/admin/piggy-banks').then(r => r.json()) as PiggyBank[]
-  for (const pb of list.filter(p => p.name === name)) {
-    await page.request.delete(`/api/admin/piggy-banks/${pb.id}`)
-  }
-}
 
 const row = (page: Page, name: string) =>
   page.locator('[data-testid="pb-row"]', { hasText: name })
