@@ -125,6 +125,7 @@
 // auto-imported utils in template scope, only in <script>.
 import formatTime from '~/utils/formatTime'
 import type { Balance } from '~/server/domain/user'
+import type { WalletRead } from '~/utils/switchBack'
 
 const props = defineProps<{
   piggyBankId: string
@@ -163,7 +164,7 @@ const openSwitch = async () => {
   switchOpen.value = true
   let sats: number | null
   try {
-    sats = (await $fetch<{ sats: number | null }>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)).sats
+    sats = (await $fetch<WalletRead>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)).sats
   } catch {
     sats = null
   }

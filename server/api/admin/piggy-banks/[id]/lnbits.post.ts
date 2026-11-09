@@ -33,9 +33,10 @@ export default defineEventHandler(async (event) => {
     // Deleted, switched or changed by a concurrent request while LNBits was being asked.
     const current = getOwnedUser(id, admin.sub)
     if (!current) throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
-    throw current.balance.source === 'manual'
-      ? createError({ statusCode: 409, statusMessage: 'The manual balance has changed. Compare the balances again.' })
-      : createError({ statusCode: 409, statusMessage: 'Piggy bank is already on LNBits' })
+    if (current.balance.source === 'manual') {
+      throw createError({ statusCode: 409, statusMessage: 'The manual balance has changed. Compare the balances again.' })
+    }
+    throw createError({ statusCode: 409, statusMessage: 'Piggy bank is already on LNBits' })
   }
   return updated
 })

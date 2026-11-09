@@ -32,7 +32,7 @@
           {{ WALLET_UNREADABLE[wallet.reason] }}
         </p>
         <p
-          v-else-if="difference === 0"
+          v-else-if="wallet.sats === sats"
           data-testid="balances-equal"
           class="text-sm text-muted"
         >
@@ -70,7 +70,7 @@
               data-testid="compare-difference"
               class="text-highlighted font-bold text-right"
             >
-              {{ withEur(difference ?? 0, true) }}
+              {{ withEur(wallet.sats - sats, true) }}
             </dd>
           </dl>
           <p
@@ -150,11 +150,8 @@ const withEur = (sats: number, signed = false) => {
   return `${inSats} ≈ ${(signed ? signedEur : eur).format(satsToEur(sats, rate.value))}`
 }
 
-// LNBits minus manual, null until LNBits gave its balance.
-const difference = computed(() => wallet.value?.sats == null ? null : wallet.value.sats - props.sats)
-
 // Equal balances need no more than the button; different ones the checkbox too.
-const canConfirm = computed(() => difference.value !== null && (difference.value === 0 || acknowledged.value))
+const canConfirm = computed(() => wallet.value?.sats != null && (wallet.value.sats === props.sats || acknowledged.value))
 
 // Only the latest opening counts: a slow read from an earlier one must not
 // replace what the custodian is looking at.

@@ -65,19 +65,19 @@ export const UserInputSchema = z.object({
 
 export type UserInput = z.infer<typeof UserInputSchema>
 
-// Body of the switch to the manual source: the starting balance in sats. At most
-// the 21M BTC supply.
-const startingSatsError = 'The starting balance must be a whole number of sats, 0 or more'
+// A balance in whole sats, 0 up to the 21M BTC supply, refused with `error`.
+const wholeSats = (error: string) => z.number({ error }).int({ error }).min(0, { error }).max(MAX_SATS, { error })
+
+// Body of the switch to the manual source: the starting balance in sats.
 export const ManualSwitchInputSchema = z.object({
-  sats: z.number({ error: startingSatsError }).int({ error: startingSatsError }).min(0, { error: startingSatsError }).max(MAX_SATS, { error: startingSatsError }),
+  sats: wholeSats('The starting balance must be a whole number of sats, 0 or more'),
 })
 
 // Body of the switch back to LNBits: the manual and LNBits balances the
 // custodian compared before confirming, so a balance that moved since is caught.
-const comparedSats = (error: string) => z.number({ error }).int({ error }).min(0, { error }).max(MAX_SATS, { error })
 export const SwitchBackInputSchema = z.object({
-  manualSats: comparedSats('The manual balance must be a whole number of sats'),
-  lnbitsSats: comparedSats('The LNBits balance must be a whole number of sats'),
+  manualSats: wholeSats('The manual balance must be a whole number of sats'),
+  lnbitsSats: wholeSats('The LNBits balance must be a whole number of sats'),
 })
 
 // Body of a manual balance change, converted from EUR by the admin view at the
