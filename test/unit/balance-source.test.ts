@@ -37,6 +37,19 @@ describe('users table migration', () => {
     assert.deepEqual(user.lnbits, { url: 'http://lnbits', invoiceKey: 'key' })
   })
 
+  it('upgrades a table that already has owners (the deployed schema)', () => {
+    const db = new DatabaseSync(':memory:')
+    db.exec(LEGACY_USERS_TABLE)
+    db.exec(`ALTER TABLE users ADD COLUMN owner TEXT NOT NULL DEFAULT ''`)
+    db.prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)').run('a', 'Anna', '1234', 'http://lnbits', 'key', 'sub-1')
+
+    migrateUsersTable(db)
+
+    const row = selectRow(db, 'a') as UserRow & { owner: string }
+    assert.equal(row.owner, 'sub-1')
+    assert.deepEqual(rowToUser(row).balance, { source: 'lnbits' })
+  })
+
   it('is idempotent and leaves a current table unchanged', () => {
     const db = new DatabaseSync(':memory:')
     db.exec(CREATE_USERS_TABLE)

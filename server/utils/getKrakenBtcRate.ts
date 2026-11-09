@@ -31,7 +31,12 @@ export const fetchKrakenBtcRate = async (baseUrl: string, timeoutMs = DEFAULT_TI
   }
 }
 
-let cached: { rate: number, at: number } | null = null
+// A failure is remembered briefly, so a dead ticker costs every polling
+// dashboard one timeout per window instead of one per poll.
+const FAILURE_CACHE_TIME = 10 * 1000
+
+let cached: { rate: number | null, at: number } | null = null
+let inFlight: Promise<number | null> | null = null
 
 /**
  * The BTC/EUR rate, cached for a minute. Null when no current rate is
@@ -39,12 +44,19 @@ let cached: { rate: number, at: number } | null = null
  */
 export default async (): Promise<number | null> => {
   const now = Date.now()
-  if (cached && now - cached.at < CACHE_TIME) {
+  if (cached && now - cached.at < (cached.rate === null ? FAILURE_CACHE_TIME : CACHE_TIME)) {
     return cached.rate
   }
 
+  // Concurrent callers share one fetch.
   // KRAKEN_URL overrides the API base (used to point at the mock in E2E tests).
-  const rate = await fetchKrakenBtcRate(process.env.KRAKEN_URL || 'https://api.kraken.com')
-  cached = rate === null ? null : { rate, at: now }
-  return rate
+  inFlight ??= fetchKrakenBtcRate(process.env.KRAKEN_URL || 'https://api.kraken.com')
+    .then((rate) => {
+      cached = { rate, at: now }
+      return rate
+    })
+    .finally(() => {
+      inFlight = null
+    })
+  return inFlight
 }

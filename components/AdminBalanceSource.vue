@@ -111,14 +111,11 @@
 // Explicit import (a Nuxt auto-import at runtime): vue-tsc does not resolve
 // auto-imported utils in template scope, only in <script>.
 import formatTime from '~/utils/formatTime'
-
-export type AdminBalance
-  = | { source: 'lnbits' }
-    | { source: 'manual', sats: number, lastChange: { time: number, sats: number, comment: string | null } }
+import type { Balance } from '~/server/domain/user'
 
 const props = defineProps<{
   piggyBankId: string
-  balance: AdminBalance
+  balance: Balance
 }>()
 
 const emit = defineEmits<{
@@ -141,17 +138,23 @@ const startingSats = computed((): number | null => {
   return /^\d+$/.test(text) ? Number(text) : null
 })
 
+// Only the latest read counts: a slow read from an earlier opening must not
+// replace the balance the custodian is looking at.
+let readId = 0
+
 const openSwitch = async () => {
+  const id = ++readId
   lnbitsSats.value = undefined
   enteredSats.value = ''
   error.value = null
   switchOpen.value = true
+  let sats: number | null
   try {
-    const { sats } = await $fetch<{ sats: number | null }>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)
-    lnbitsSats.value = sats
+    sats = (await $fetch<{ sats: number | null }>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)).sats
   } catch {
-    lnbitsSats.value = null
+    sats = null
   }
+  if (id === readId) lnbitsSats.value = sats
 }
 
 const confirmSwitch = async () => {

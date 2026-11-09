@@ -142,6 +142,7 @@
 // Explicit import (a Nuxt auto-import at runtime): vue-tsc does not resolve
 // auto-imported utils in template scope, only in <script>.
 import formatTime from '~/utils/formatTime'
+import type { Balance } from '~/server/domain/user'
 
 definePageMeta({
   layout: 'admin',
@@ -153,7 +154,7 @@ interface PiggyBankListItem {
   name: string
   accessKey: string
   lnbitsUrl: string
-  balance: { source: 'lnbits' } | { source: 'manual', lastChange: { time: number } }
+  balance: Balance
 }
 
 // `manual`: the balance is held in the app; the row needs nothing from LNBits.

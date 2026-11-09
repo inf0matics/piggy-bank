@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import type { PiggyBankFormValues } from '~/components/AdminPiggyBankForm.vue'
-import type { AdminBalance } from '~/components/AdminBalanceSource.vue'
+import type { Balance } from '~/server/domain/user'
 
 definePageMeta({
   layout: 'admin',
@@ -48,7 +48,7 @@ const { data: record, refresh } = await useFetch<{
   accessKey: string
   lnbitsUrl: string
   invoiceKey: string
-  balance: AdminBalance
+  balance: Balance
 }>(`/api/admin/piggy-banks/${id}`)
 
 if (!record.value) {

@@ -92,6 +92,39 @@ describe('getKrakenBtcRate cache', () => {
     assert.equal(await getKrakenBtcRate(), null, 'an expired rate is not served')
 
     globalThis.fetch = async () => new Response(JSON.stringify(ticker('60000')))
-    assert.equal(await getKrakenBtcRate(), 60000, 'recovers on the next call')
+    now += 11_000
+    assert.equal(await getKrakenBtcRate(), 60000, 'recovers once the failure has expired')
+  })
+
+  it('remembers a failure briefly, so a dead Kraken costs one timeout per window', async () => {
+    let now = 5_000_000
+    mock.method(Date, 'now', () => now)
+    let calls = 0
+    globalThis.fetch = async () => {
+      calls++
+      throw new TypeError('fetch failed')
+    }
+
+    assert.equal(await getKrakenBtcRate(), null)
+    now += 5_000
+    assert.equal(await getKrakenBtcRate(), null)
+    assert.equal(calls, 1, 'not refetched within the failure window')
+
+    now += 6_000
+    assert.equal(await getKrakenBtcRate(), null)
+    assert.equal(calls, 2, 'retried after the failure window')
+  })
+
+  it('shares one fetch between concurrent callers', async () => {
+    mock.method(Date, 'now', () => 9_000_000)
+    let calls = 0
+    globalThis.fetch = async () => {
+      calls++
+      await new Promise(resolve => setTimeout(resolve, 10))
+      return new Response(JSON.stringify(ticker('70000')))
+    }
+
+    assert.deepEqual(await Promise.all([getKrakenBtcRate(), getKrakenBtcRate(), getKrakenBtcRate()]), [70000, 70000, 70000])
+    assert.equal(calls, 1)
   })
 })
