@@ -36,6 +36,13 @@ describe('readWalletSats', () => {
     respondWith(401, { detail: 'Invalid key' })
     assert.deepEqual(await readWalletSats(wallet), { sats: null, reason: 'refused' })
   })
+
+  it('does not take an answer without a balance as one', async () => {
+    for (const body of [{}, { balance: 'lots' }, { balance: null }]) {
+      respondWith(200, body)
+      assert.deepEqual(await readWalletSats(wallet), { sats: null, reason: 'refused' }, JSON.stringify(body))
+    }
+  })
 })
 
 describe('checkSwitchBack', () => {

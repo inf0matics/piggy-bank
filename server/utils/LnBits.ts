@@ -50,14 +50,18 @@ export class LnBitsUnreachableError extends Error {
 /**
  * The wallet balance in whole sats, or why LNBits could not give it:
  * unreachable, or refusing the invoice key (any other failure of a reachable
- * LNBits).
+ * LNBits, an answer without a balance included).
  */
 export const readWalletSats = async (wallet: { url: string, invoiceKey: string }): Promise<WalletRead> => {
+  let millisats: unknown
   try {
-    return { sats: Math.floor((await new LnBits({ apiKey: wallet.invoiceKey, url: wallet.url }).getBalance()) / 1000) }
+    millisats = await new LnBits({ apiKey: wallet.invoiceKey, url: wallet.url }).getBalance()
   } catch (error) {
     return { sats: null, reason: error instanceof LnBitsUnreachableError ? 'unreachable' : 'refused' }
   }
+  // An answer without a usable balance is no balance to compare.
+  if (typeof millisats !== 'number' || !Number.isFinite(millisats) || millisats < 0) return { sats: null, reason: 'refused' }
+  return { sats: Math.floor(millisats / 1000) }
 }
 
 export default class LnBits {

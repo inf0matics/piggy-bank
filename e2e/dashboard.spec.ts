@@ -58,6 +58,21 @@ test('shows the last payment with comment and amount', async ({ page }) => {
   await expect(page.getByText('0.00005000 BTC')).toBeVisible()
 })
 
+test('toasts a payment that LNBits lists before its balance rises', async ({ page }) => {
+  await login(page)
+  await expect(page.getByTestId('sats-balance')).toHaveText(DEFAULT_BALANCE, { timeout: 15_000 })
+
+  // An LNURL-p invoice shows in the payment list (pending) before it settles.
+  await setMockState({ payment: { sats: 1_000, comment: 'Snack money' } })
+  // Let a poll see the payment while the balance is unchanged.
+  await page.waitForTimeout(3_000)
+  await setMockState({ balance: 101_000 })
+
+  const toasts = page.getByRole('region', { name: /Notifications/ })
+  await expect(toasts.getByText('Snack money')).toBeVisible({ timeout: 15_000 })
+  await expect(toasts.getByText('+1000 sats')).toBeVisible()
+})
+
 test('shows no last payment section when there is none', async ({ page }) => {
   await login(page)
   await expect(page.getByText(DEFAULT_BALANCE)).toBeVisible({ timeout: 15_000 })

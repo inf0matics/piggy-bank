@@ -69,8 +69,9 @@ const payment = ref<{ sats: number, comment: string | null, time: number } | nul
 
 let firstTime = true
 let lastSatsValue = 0
-// The last payment seen, so only a new one is announced.
-let lastPaymentKey = ''
+// The time of the newest payment the shown balance already includes, so only
+// a newer one is announced.
+let lastPaymentTime = 0
 
 let intervalId: ReturnType<typeof setInterval> | null = null
 // One request at a time: while LNBits is slow to fail, polls must not pile up.
@@ -170,23 +171,21 @@ const fetchDashboard = async () => {
   eur.value = response.eur
   sats.value = response.sats
 
-  const paymentKey = response.payment
-    ? `${response.payment.time}:${response.payment.sats}:${response.payment.comment}`
-    : ''
-
   // The first balance is the baseline, even 0: an empty piggy bank's first
   // top-up is announced like any other.
   if (firstTime) {
     lastSatsValue = response.sats
-    lastPaymentKey = paymentKey
+    lastPaymentTime = response.payment?.time ?? 0
     firstTime = false
   }
 
-  // Only money coming in with a new payment is announced. A decrease (a manual
-  // balance corrected down), a change without a payment to show (a manual
-  // piggy bank frozen from a wallet without payments) and a jump without a new
-  // payment (switched back to an LNBits wallet holding more) are not.
-  if (response.sats > lastSatsValue && response.payment && response.payment.sats > 0 && paymentKey !== lastPaymentKey) {
+  // Only money coming in with a newer payment is announced. A decrease (a
+  // manual balance corrected down), a change without a payment to show (a
+  // manual piggy bank frozen from a wallet without payments) and a jump with an
+  // older payment (switched back to an LNBits wallet holding more) are not. A
+  // payment LNBits lists before the balance includes it (a pending invoice) is
+  // announced once the balance rises.
+  if (response.sats > lastSatsValue && response.payment && response.payment.sats > 0 && response.payment.time > lastPaymentTime) {
     infoBoxRef.value?.closePopup()
     toast.add({
       title: response.payment.comment || 'New Payment',
@@ -196,8 +195,10 @@ const fetchDashboard = async () => {
       duration: 2000,
     })
   }
+  if (response.sats !== lastSatsValue) {
+    lastPaymentTime = Math.max(lastPaymentTime, response.payment?.time ?? 0)
+  }
   lastSatsValue = response.sats
-  lastPaymentKey = paymentKey
 }
 
 const logout = async () => {

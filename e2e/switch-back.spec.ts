@@ -109,6 +109,52 @@ test('different balances show both and the difference, and need a deliberate con
   }
 })
 
+test('switching back after a manual change announces no old LNBits payment', async ({ page }) => {
+  await setMockState({ payment: { sats: 2_100, comment: 'Birthday' } })
+  const pb = await freeze(page, 'Changed', '6445')
+
+  try {
+    // The manual change replaces the carried-over payment as the last change.
+    await page.request.post(`/api/admin/piggy-banks/${pb.id}/balance`, { data: { mode: 'add', sats: -20_000, comment: 'Typo' } })
+    const child = await page.context().newPage()
+    await login(child, '6445')
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00080000 BTC', { timeout: 15_000 })
+    await recordToasts(child)
+
+    const { dialog, confirm } = await openSwitchBack(page, pb)
+    await expect(dialog.getByTestId('compare-difference')).toHaveText('+20,000 sats ≈ +€10.00')
+    await dialog.getByRole('checkbox').check()
+    await confirm.click()
+    await expectOnLnbits(page)
+
+    // LNBits' last payment is older than the manual change: not a new payment.
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00100000 BTC', { timeout: 15_000 })
+    await child.waitForTimeout(3_000)
+    expect(await seenToasts(child)).toEqual([])
+  } finally {
+    await deleteByName(page, 'Changed')
+  }
+})
+
+test('LNBits holding less, without a rate: the difference shows in sats only', async ({ page }) => {
+  const pb = await freeze(page, 'Less', '6446')
+  await setMockState({ balance: 60_000, rateAvailable: false })
+
+  try {
+    const { dialog, confirm } = await openSwitchBack(page, pb)
+    await expect(dialog.getByTestId('compare-manual')).toHaveText('100,000 sats')
+    await expect(dialog.getByTestId('compare-lnbits')).toHaveText('60,000 sats')
+    await expect(dialog.getByTestId('compare-difference')).toHaveText('-40,000 sats')
+    await expect(dialog.getByText('EUR values are unavailable right now.')).toBeVisible()
+    await dialog.getByRole('checkbox').check()
+    await confirm.click()
+    await expectOnLnbits(page)
+    expect(await source(page, pb.id)).toBe('lnbits')
+  } finally {
+    await deleteByName(page, 'Less')
+  }
+})
+
 test('LNBits unreachable: switching back is refused with a message and the piggy bank stays manual', async ({ page }) => {
   const pb = await freeze(page, 'Down', '6442')
   await setMockState({ reachable: false })
