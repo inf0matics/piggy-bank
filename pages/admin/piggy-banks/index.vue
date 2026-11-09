@@ -153,12 +153,14 @@ interface PiggyBankListItem {
   name: string
   accessKey: string
   lnbitsUrl: string
+  balance: { source: 'lnbits' } | { source: 'manual', lastChange: { time: number } }
 }
 
-type LnurlpState = 'checking' | 'active' | 'inactive' | 'unreachable'
+// `manual`: the balance is held in the app; the row needs nothing from LNBits.
+type LnurlpState = 'checking' | 'active' | 'inactive' | 'unreachable' | 'manual'
 
 interface PiggyBankStatus {
-  lnurlp: Exclude<LnurlpState, 'checking'>
+  lnurlp: Exclude<LnurlpState, 'checking' | 'manual'>
   lnurl: string | null
   address: string | null
   lastPaymentTime: number | null
@@ -168,8 +170,8 @@ const { data: piggyBanks, refresh } = await useFetch<PiggyBankListItem[]>('/api/
   default: () => [],
 })
 
-// LNBits state per row, loaded after the list renders — one request per row, so
-// a slow or dead LNBits only holds up its own row.
+// LNBits state per LNBits row, loaded after the list renders — one request per
+// row, so a slow or dead LNBits only holds up its own row.
 const statuses = reactive(new Map<string, PiggyBankStatus>())
 const UNREACHABLE: PiggyBankStatus = { lnurlp: 'unreachable', lnurl: null, address: null, lastPaymentTime: null }
 
@@ -182,7 +184,9 @@ const loadStatus = async (id: string) => {
 }
 
 onMounted(() => {
-  for (const pb of piggyBanks.value) loadStatus(pb.id)
+  for (const pb of piggyBanks.value) {
+    if (pb.balance.source === 'lnbits') loadStatus(pb.id)
+  }
 })
 
 const BADGES: Record<LnurlpState, { label: string, ariaLabel: string, pill: string, dot: string, depositHint: string }> = {
@@ -190,18 +194,25 @@ const BADGES: Record<LnurlpState, { label: string, ariaLabel: string, pill: stri
   active: { label: 'LNURL-p', ariaLabel: 'LNURL-p active', pill: 'bg-success/15 text-success', dot: 'bg-success', depositHint: 'Show deposit QR code' },
   inactive: { label: 'LNURL-p', ariaLabel: 'LNURL-p inactive', pill: 'bg-accented text-muted', dot: 'bg-(--ui-text-dimmed)', depositHint: 'No LNURLp configured' },
   unreachable: { label: 'Unreachable', ariaLabel: 'LNBits unreachable', pill: 'bg-error/15 text-error', dot: 'bg-error', depositHint: 'LNBits unreachable' },
+  manual: { label: 'Manual', ariaLabel: 'Manual balance', pill: 'bg-accented text-highlighted', dot: 'bg-primary', depositHint: 'Manual balance, no deposit' },
 }
 
-const lastTxText = (status: PiggyBankStatus | undefined): string => {
+const lastTxText = (time: number | null): string =>
+  time ? `Last tx ${formatTime(time)}` : 'No transactions yet'
+
+const lnbitsLastTxText = (status: PiggyBankStatus | undefined): string => {
   if (!status) return 'Checking…'
   if (status.lnurlp === 'unreachable') return 'Last tx unknown'
-  return status.lastPaymentTime ? `Last tx ${formatTime(status.lastPaymentTime)}` : 'No transactions yet'
+  return lastTxText(status.lastPaymentTime)
 }
 
 const rows = computed(() => piggyBanks.value.map((pb) => {
+  if (pb.balance.source === 'manual') {
+    return { ...pb, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange.time) }
+  }
   const status = statuses.get(pb.id)
   const state: LnurlpState = status?.lnurlp ?? 'checking'
-  return { ...pb, state, badge: BADGES[state], lastTx: lastTxText(status) }
+  return { ...pb, state, badge: BADGES[state], lastTx: lnbitsLastTxText(status) }
 }))
 
 const revealed = reactive(new Set<string>())

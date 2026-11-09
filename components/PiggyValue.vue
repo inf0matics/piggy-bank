@@ -15,18 +15,29 @@
       >
         {{ satsText }}
       </div>
-      <div
-        v-if="rate && !unavailable"
-        class="text-sm font-semibold"
-      >
-        {{ `1 BTC = ${rate} EUR` }}
-      </div>
-      <div
-        v-if="eur && !unavailable"
-        class="text-sm font-semibold"
-      >
-        {{ `${eur} EUR` }}
-      </div>
+      <template v-if="!unavailable">
+        <div
+          v-if="rate === null"
+          class="text-sm font-semibold"
+          data-testid="eur-unavailable"
+        >
+          EUR value currently unavailable
+        </div>
+        <template v-else>
+          <div
+            v-if="rate"
+            class="text-sm font-semibold"
+          >
+            {{ `1 BTC = ${rate} EUR` }}
+          </div>
+          <div
+            v-if="eur"
+            class="text-sm font-semibold"
+          >
+            {{ `${eur} EUR` }}
+          </div>
+        </template>
+      </template>
     </div>
   </div>
 </template>
@@ -40,8 +51,9 @@ const satsInternal = ref(-1)
 
 const { sats, eur, rate, unavailable = false } = defineProps<{
   sats: number,
-  eur: number,
-  rate: number,
+  // Both null when no current BTC/EUR rate is available.
+  eur: number | null,
+  rate: number | null,
   // LNBits cannot be reached right now; the last values are not shown.
   unavailable?: boolean,
 }>()

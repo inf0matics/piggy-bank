@@ -1,6 +1,6 @@
 // Lists the admin's piggy banks straight from the DB, so the list renders even
-// when LNBits is down. Each row then loads its LNBits state from
-// /api/admin/piggy-banks/:id/status.
+// when LNBits is down. Each LNBits row then loads its LNBits state from
+// /api/admin/piggy-banks/:id/status; a manual row needs nothing from LNBits.
 export default defineEventHandler((event) => {
   const admin = requireAdmin(event)
 
@@ -9,5 +9,6 @@ export default defineEventHandler((event) => {
     name: user.name,
     accessKey: user.accessKey,
     lnbitsUrl: user.lnbits.url,
+    balance: user.balance,
   }))
 })

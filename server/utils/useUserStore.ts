@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite'
 import {
   CREATE_SETTINGS_TABLE,
   CREATE_USERS_TABLE,
+  migrateUsersTable,
   rowToUser,
   type UserInput,
   type UserRow,
@@ -19,15 +20,6 @@ const resolveDbPath = (): string => {
     : path.resolve(process.cwd(), 'data/piggy-bank.db')
 }
 
-// Adds the `owner` column to pre-ownership databases. New DBs already get it via
-// CREATE_USERS_TABLE; this backfills existing ones (PRAGMA can't be parameterised).
-const ensureOwnerColumn = (db: DatabaseSync): void => {
-  const columns = db.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>
-  if (!columns.some(c => c.name === 'owner')) {
-    db.exec(`ALTER TABLE users ADD COLUMN owner TEXT NOT NULL DEFAULT ''`)
-  }
-}
-
 const getDb = (): DatabaseSync => {
   if (dbCache == null) {
     const dbPath = resolveDbPath()
@@ -35,7 +27,7 @@ const getDb = (): DatabaseSync => {
     dbCache = new DatabaseSync(dbPath)
     dbCache.exec(CREATE_USERS_TABLE)
     dbCache.exec(CREATE_SETTINGS_TABLE)
-    ensureOwnerColumn(dbCache)
+    migrateUsersTable(dbCache)
   }
   return dbCache
 }
@@ -105,6 +97,23 @@ export const updateOwnedUser = (id: string, owner: string, input: UserInput): Us
     return null
   }
   return getUserById(id)
+}
+
+/**
+ * Freezes an LNBits piggy bank at `sats` and puts it on the manual source. The
+ * freeze is recorded as its first change. The LNBits URL and key are kept.
+ * Null when the piggy bank is not the owner's or not on LNBits.
+ */
+export const switchOwnedUserToManual = (id: string, owner: string, sats: number): UserSchema | null => {
+  const result = getDb()
+    .prepare(`
+      UPDATE users
+      SET balance_source = 'manual', manual_sats = ?, manual_changed_at = ?,
+          manual_change_sats = ?, manual_change_comment = NULL
+      WHERE id = ? AND owner = ? AND balance_source = 'lnbits'
+    `)
+    .run(sats, Math.floor(Date.now() / 1000), sats, id, owner)
+  return result.changes === 0 ? null : getUserById(id)
 }
 
 export const deleteOwnedUser = (id: string, owner: string): boolean => {

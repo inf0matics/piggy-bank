@@ -5,12 +5,13 @@ import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
 
 // `available: false` — LNBits cannot be reached right now. Not an error: the
 // dashboard says so and keeps polling until LNBits is back.
+// `rate` and `eur` are null when no current BTC/EUR rate is available.
 export const DashboardDto = z.discriminatedUnion('available', [z.object({
   available: z.literal(true),
   name: z.string(),
   sats: z.number(),
-  eur: z.number(),
-  rate: z.number(),
+  eur: z.number().nullable(),
+  rate: z.number().nullable(),
   lnurl: z.string().nullable(),
   address: z.string().nullable(),
   payment: z.object({
@@ -24,8 +25,27 @@ export const DashboardDto = z.discriminatedUnion('available', [z.object({
 })])
 export type DashboardDto = z.infer<typeof DashboardDto>
 
+type DashboardBalance = Pick<Extract<DashboardDto, { available: true }>, 'sats' | 'lnurl' | 'address' | 'payment'>
+
+const available = async (name: string, balance: DashboardBalance) => {
+  const rate = await getKrakenBtcRate()
+  const eur = rate === null ? null : Math.round(balance.sats / 100_000_000 * rate * 100) / 100
+  return DashboardDto.parse({ available: true, name, ...balance, eur, rate })
+}
+
 export default defineLoggedInEventHandler(async (event, authUser) => {
   const user = authUser as UserSchema
+
+  // A manual balance needs nothing from LNBits; there is nothing to pay into.
+  if (user.balance.source === 'manual') {
+    return available(user.name, {
+      sats: user.balance.sats,
+      lnurl: null,
+      address: null,
+      payment: user.balance.lastChange,
+    })
+  }
+
   const lnbits = new LnBits({
     apiKey: user.lnbits.invoiceKey,
     url: user.lnbits.url,
@@ -56,12 +76,6 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
   }
   const lnurlPs = links.status === 'fulfilled' ? links.value : null
   const lastLnbitsPayment = last.value
-  const sats = Math.floor(lnbitsBalance / 1000)
-
-  const btc = sats / 100_000_000
-  const rate = await getKrakenBtcRate()
-  const eur = Math.round(btc * rate * 100) / 100
-
   let address: string | null = null
   let lnurl: string | null = null
 
@@ -81,12 +95,8 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     }
   }
 
-  return DashboardDto.parse({
-    available: true,
-    name: user.name,
-    sats,
-    eur,
-    rate,
+  return available(user.name, {
+    sats: Math.floor(lnbitsBalance / 1000),
     lnurl,
     address,
     payment,

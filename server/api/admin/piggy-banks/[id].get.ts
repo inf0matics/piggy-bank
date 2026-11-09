@@ -13,5 +13,6 @@ export default defineEventHandler((event) => {
     accessKey: user.accessKey,
     lnbitsUrl: user.lnbits.url,
     invoiceKey: user.lnbits.invoiceKey,
+    balance: user.balance,
   }
 })

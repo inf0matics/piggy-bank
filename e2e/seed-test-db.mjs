@@ -18,7 +18,12 @@ db.exec(`
     access_key TEXT NOT NULL UNIQUE,
     lnbits_url TEXT NOT NULL,
     lnbits_invoice_key TEXT NOT NULL,
-    owner TEXT NOT NULL DEFAULT ''
+    owner TEXT NOT NULL DEFAULT '',
+    balance_source TEXT NOT NULL DEFAULT 'lnbits',
+    manual_sats INTEGER,
+    manual_changed_at INTEGER,
+    manual_change_sats INTEGER,
+    manual_change_comment TEXT
   )
 `)
 const upsert = db.prepare(`

@@ -16,6 +16,13 @@
       </h1>
     </div>
 
+    <AdminBalanceSource
+      v-if="record"
+      :piggy-bank-id="id"
+      :balance="record.balance"
+      @changed="refresh"
+    />
+
     <AdminPiggyBankForm
       :initial="initial"
       submit-label="Save"
@@ -26,6 +33,7 @@
 
 <script setup lang="ts">
 import type { PiggyBankFormValues } from '~/components/AdminPiggyBankForm.vue'
+import type { AdminBalance } from '~/components/AdminBalanceSource.vue'
 
 definePageMeta({
   layout: 'admin',
@@ -34,12 +42,13 @@ definePageMeta({
 
 const id = useRoute().params.id as string
 
-const { data: record } = await useFetch<{
+const { data: record, refresh } = await useFetch<{
   id: string
   name: string
   accessKey: string
   lnbitsUrl: string
   invoiceKey: string
+  balance: AdminBalance
 }>(`/api/admin/piggy-banks/${id}`)
 
 if (!record.value) {
