@@ -12,13 +12,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: parsed.error.issues[0]?.message ?? 'Invalid input' })
   }
 
-  const user = getOwnedUser(id, admin.sub)
-  if (!user) {
+  const updated = switchOwnedUserToManual(id, admin.sub, parsed.data.sats)
+  if (updated) return updated
+
+  // Nothing changed: either not the admin's piggy bank, or already manual.
+  if (!getOwnedUser(id, admin.sub)) {
     throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
   }
-  const updated = switchOwnedUserToManual(id, admin.sub, parsed.data.sats)
-  if (!updated) {
-    throw createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
-  }
-  return updated
+  throw createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
 })
