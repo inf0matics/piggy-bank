@@ -173,17 +173,19 @@ const fetchDashboard = async () => {
     firstTime = false
   }
 
-  if (lastSatsValue != response.sats) {
+  // A balance change without a payment to show (a manual piggy bank frozen
+  // from a wallet without payments) is not announced as one.
+  if (lastSatsValue != response.sats && response.payment) {
     infoBoxRef.value?.closePopup()
     toast.add({
-      title: response.payment?.comment || 'New Payment',
-      description: `+${response.payment?.sats} sats`,
+      title: response.payment.comment || 'New Payment',
+      description: `+${response.payment.sats} sats`,
       icon: 'i-heroicons-currency-bitcoin-16-solid',
       color: 'success',
       duration: 2000,
     })
-    lastSatsValue = response.sats
   }
+  lastSatsValue = response.sats
 }
 
 const logout = async () => {

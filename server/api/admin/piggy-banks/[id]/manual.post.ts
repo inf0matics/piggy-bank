@@ -24,8 +24,10 @@ export default defineEventHandler(async (event) => {
   const { sats } = parsed.data
   const updated = switchOwnedUserToManual(id, admin.sub, sats, await freezeLastChange(user.lnbits, sats))
   if (!updated) {
-    // Switched by a concurrent request while LNBits was being asked.
-    throw createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
+    // Deleted or switched by a concurrent request while LNBits was being asked.
+    throw getOwnedUser(id, admin.sub)
+      ? createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
+      : createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
   }
   return updated
 })
