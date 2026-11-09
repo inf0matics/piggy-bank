@@ -10,6 +10,9 @@ test.describe('privacy policy', () => {
       await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible()
     }
     await expect(page.getByText('Schemerlhöhe 377, 8076 Vasoldsberg, Austria')).toBeVisible()
+    await expect(page.getByText('carried over from the wallet\'s most recent payment')).toBeVisible()
+    await expect(page.getByText('strictly necessary cookies and local storage')).toBeVisible()
+    await expect(page.getByText('with their default LNbits URL setting')).toBeVisible()
   })
 
   test('/privacy-policy permanently redirects to /privacy', async ({ request }) => {

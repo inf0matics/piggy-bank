@@ -47,8 +47,9 @@
         <p>
           The LNbits instance URL and a read-only API key are stored in the local
           SQLite database to fetch balance and transaction data. No payment data
-          is stored by Piggy Bank itself — all Lightning Network data lives in
-          LNbits. Legal basis: Art. 6(1)(b) GDPR.
+          is stored by Piggy Bank itself, except as described under Manual
+          balances — all Lightning Network data lives in LNbits. Legal basis:
+          Art. 6(1)(b) GDPR.
         </p>
         <h3 class="font-bold">
           Balance and transaction data
@@ -64,9 +65,10 @@
         </h3>
         <p>
           For piggy banks whose balance is kept by hand, the balance and its last
-          change (time, amount and optional comment), as entered by the
-          administrator, are stored in the local SQLite database. Legal basis:
-          Art. 6(1)(b) GDPR.
+          change (time, amount and optional comment) are stored in the local
+          SQLite database. The last change is entered by the administrator or,
+          when switching from LNbits, carried over from the wallet's most recent
+          payment (time, amount, comment). Legal basis: Art. 6(1)(b) GDPR.
         </p>
         <h3 class="font-bold">
           Admin accounts
@@ -74,7 +76,8 @@
         <p>
           Administrators sign in via Logto, for example with LNURL-auth. We
           process a pseudonymous account ID, stored with each piggy bank the
-          administrator owns, and, where the identity provider supplies one, a
+          administrator owns and with their default LNbits URL setting, and,
+          where the identity provider supplies one, a
           name, username or email address. Legal basis: Art. 6(1)(b) GDPR.
         </p>
         <h3 class="font-bold">
@@ -92,8 +95,8 @@
           Cookies
         </h2>
         <p>
-          We set only strictly necessary cookies: one to keep you signed in to a
-          piggy bank, the administrator sign-in session, and the administrator's
+          We use only strictly necessary cookies and local storage: one to keep
+          you signed in to a piggy bank, the administrator sign-in session, and a
           light/dark mode preference. We do not use tracking, analytics or
           advertising cookies.
         </p>
@@ -136,8 +139,8 @@
           Retention
         </h2>
         <p>
-          We keep piggy bank and account data until the piggy bank is deleted or
-          you ask us to delete it; server logs are kept by the hosting provider
+          We keep piggy bank and account data until the piggy bank or admin
+          account is deleted or you ask us to delete it; server logs are kept by the hosting provider
           for a limited period.
         </p>
       </section>
