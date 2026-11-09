@@ -87,6 +87,10 @@ export default defineNuxtConfig({
       },
     },
   },
+  // The privacy policy used to live at /privacy-policy; keep old links working.
+  routeRules: {
+    '/privacy-policy': { redirect: { to: '/privacy', statusCode: 301 } },
+  },
   experimental: {
     appManifest: false,
   },

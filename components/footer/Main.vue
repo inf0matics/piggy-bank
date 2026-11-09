@@ -31,7 +31,7 @@
             class="text-footer-500"
           >·</span>
           <NuxtLink
-            to="/privacy-policy"
+            to="/privacy"
             :class="linkClass"
           >Privacy Policy</NuxtLink>
           <template v-if="githubLink">
