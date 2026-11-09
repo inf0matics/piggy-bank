@@ -38,7 +38,7 @@ export const parseEurChange = (input: string): EurChange | null => {
 }
 
 /** Euros as whole sats at `rate` (EUR per BTC). */
-export const eurToSats = (eur: number, rate: number): number => Math.round(eur / rate * 100_000_000)
+const eurToSats = (eur: number, rate: number): number => Math.round(eur / rate * 100_000_000)
 
 /** Sats as euros at `rate`, rounded to cents. */
 export const satsToEur = (sats: number, rate: number): number => Math.round(sats / 100_000_000 * rate * 100) / 100

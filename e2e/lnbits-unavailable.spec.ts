@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { deleteByName, loginAsAdmin } from './helpers/admin'
 import { login } from './helpers/login'
 import { resetMock, setMockState } from './helpers/mockControl'
 
@@ -11,20 +12,6 @@ const DEFAULT_BALANCE = '0.00100000 BTC'
 
 const row = (page: Page, name: string) =>
   page.locator('[data-testid="pb-row"]', { hasText: name })
-
-const loginAsAdmin = (page: Page) => page.context().addCookies([{
-  name: 'e2e_admin',
-  value: '1',
-  domain: '127.0.0.1',
-  path: '/',
-}])
-
-const deleteByName = async (page: Page, name: string) => {
-  const list = await page.request.get('/api/admin/piggy-banks').then(r => r.json()) as { id: string, name: string }[]
-  for (const pb of list.filter(p => p.name === name)) {
-    await page.request.delete(`/api/admin/piggy-banks/${pb.id}`)
-  }
-}
 
 test.beforeEach(async () => {
   await resetMock()
