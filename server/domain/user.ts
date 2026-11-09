@@ -6,24 +6,36 @@ const LnBitsSchema = z.object({
   invoiceKey: z.string(),
 })
 
+const BalanceChangeSchema = z.object({
+  time: z.number(), // unix seconds
+  sats: z.number().int(),
+  comment: z.string().nullable(),
+})
+
+export type BalanceChange = z.infer<typeof BalanceChangeSchema>
+
 // Where a piggy bank's balance comes from. `lnbits`: read live from the wallet.
 // `manual`: a single sats balance the custodian manages in the admin; the app
-// remembers only its last change (shown as "Last payment"), no history. The
-// LNBits URL and key are kept either way.
+// remembers only its last change (shown as "Last payment"), no history. Null
+// when frozen from a wallet without payments. The LNBits URL and key are kept
+// either way.
 const BalanceSchema = z.discriminatedUnion('source', [
   z.object({ source: z.literal('lnbits') }),
   z.object({
     source: z.literal('manual'),
     sats: z.number().int().nonnegative(),
-    lastChange: z.object({
-      time: z.number(), // unix seconds
-      sats: z.number().int(),
-      comment: z.string().nullable(),
-    }),
+    lastChange: BalanceChangeSchema.nullable(),
   }),
 ])
 
 export type Balance = z.infer<typeof BalanceSchema>
+
+/** An LNBits payment (amount in millisats) as a change in whole sats. */
+export const lnbitsPaymentToChange = (payment: { amount: number, comment: string | null, time: number }): BalanceChange => ({
+  time: payment.time || 0,
+  sats: Math.floor((payment.amount || 0) / 1000),
+  comment: payment.comment || null,
+})
 
 export const UserSchema = z.object({
   id: z.string(),
@@ -123,11 +135,13 @@ const rowToBalance = (row: UserRow): Balance => BalanceSchema.parse(row.balance_
   ? {
       source: 'manual',
       sats: row.manual_sats,
-      lastChange: {
-        time: row.manual_changed_at,
-        sats: row.manual_change_sats,
-        comment: row.manual_change_comment,
-      },
+      lastChange: row.manual_changed_at === null
+        ? null
+        : {
+            time: row.manual_changed_at,
+            sats: row.manual_change_sats,
+            comment: row.manual_change_comment,
+          },
     }
   : { source: row.balance_source })
 

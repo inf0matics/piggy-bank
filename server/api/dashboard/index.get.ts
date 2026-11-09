@@ -1,5 +1,5 @@
 import z from 'zod'
-import type { UserSchema } from '~/server/domain/user'
+import { lnbitsPaymentToChange, type UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
 
@@ -86,19 +86,10 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     address = `${lnurlPs[0].username}@${new URL(user.lnbits.url).hostname}`
   }
 
-  let payment = null
-  if (lastLnbitsPayment) {
-    payment = {
-      sats: Math.floor((lastLnbitsPayment.amount || 0) / 1000),
-      comment: lastLnbitsPayment.comment || null,
-      time: lastLnbitsPayment.time || 0,
-    }
-  }
-
   return available(user.name, {
     sats: Math.floor(lnbitsBalance / 1000),
     lnurl,
     address,
-    payment,
+    payment: lastLnbitsPayment ? lnbitsPaymentToChange(lastLnbitsPayment) : null,
   })
 })

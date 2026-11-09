@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { describe, it } from 'node:test'
 import {
   CREATE_USERS_TABLE,
+  lnbitsPaymentToChange,
   ManualSwitchInputSchema,
   migrateUsersTable,
   rowToUser,
@@ -95,6 +96,11 @@ describe('rowToUser', () => {
     assert.deepEqual(user.lnbits, { url: 'http://lnbits', invoiceKey: 'key' })
   })
 
+  it('maps a manual piggy bank frozen before any payment, without a last change', () => {
+    const user = rowToUser({ ...lnbitsRow, balance_source: 'manual', manual_sats: 0 })
+    assert.deepEqual(user.balance, { source: 'manual', sats: 0, lastChange: null })
+  })
+
   it('ignores leftover manual columns on an LNBits piggy bank', () => {
     const user = rowToUser({ ...lnbitsRow, manual_sats: 5, manual_changed_at: 1, manual_change_sats: 5 })
     assert.deepEqual(user.balance, { source: 'lnbits' })
@@ -123,5 +129,19 @@ describe('ManualSwitchInputSchema', () => {
     }
     assert.equal(message({}), 'The starting balance must be a whole number of sats, 0 or more')
     assert.equal(ManualSwitchInputSchema.safeParse(undefined).success, false)
+  })
+})
+
+describe('lnbitsPaymentToChange', () => {
+  it('turns the last LNBits payment into a change in whole sats', () => {
+    assert.deepEqual(lnbitsPaymentToChange({ amount: 2_100_999, comment: 'Birthday', time: 1_700_000_000 }), {
+      time: 1_700_000_000,
+      sats: 2_100,
+      comment: 'Birthday',
+    })
+  })
+
+  it('reads an empty comment as none', () => {
+    assert.equal(lnbitsPaymentToChange({ amount: 1_000, comment: '', time: 1 }).comment, null)
   })
 })

@@ -49,8 +49,8 @@ test.afterAll(async () => {
   await resetMock()
 })
 
-test('switching with LNBits reachable freezes the LNBits balance', async ({ page }) => {
-  await setMockState({ balance: 123_456 })
+test('switching with LNBits reachable freezes the LNBits balance and keeps its last payment', async ({ page }) => {
+  await setMockState({ balance: 123_456, payment: { sats: 2_100, comment: 'Birthday' } })
   const pb = await createPiggyBank(page, 'Frozen', '6420')
 
   try {
@@ -67,7 +67,10 @@ test('switching with LNBits reachable freezes the LNBits balance', async ({ page
     await expect(page.getByTestId('sats-balance')).toHaveText('0.00123456 BTC', { timeout: 15_000 })
     await expect(page.getByText('1 BTC = 50000 EUR')).toBeVisible()
     await expect(page.getByText('61.73 EUR')).toBeVisible()
+    // The child sees no trace of the freeze: still the last real payment.
     await expect(page.getByText('Last Payment')).toBeVisible()
+    await expect(page.getByText('0.00002100 BTC')).toBeVisible()
+    await expect(page.getByText('Birthday')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
   } finally {
@@ -91,6 +94,9 @@ test('switching with LNBits unreachable takes a starting balance from the custod
 
     await login(page, '6421')
     await expect(page.getByTestId('sats-balance')).toHaveText('0.00004200 BTC', { timeout: 15_000 })
+    // No LNBits payment to keep: the freeze is the first change.
+    await expect(page.getByText('Last Payment')).toBeVisible()
+    await expect(page.getByText('0.00004200 BTC')).toHaveCount(2)
     await expect(page.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
   } finally {
     await deleteByName(page, 'Entered')
@@ -107,6 +113,8 @@ test('a manual piggy bank\'s dashboard keeps working while LNBits is down', asyn
 
     await login(page, '6422')
     await expect(page.getByTestId('sats-balance')).toHaveText('0.00077777 BTC', { timeout: 5_000 })
+    // Frozen while LNBits had no payments: none to show.
+    await expect(page.getByText('Last Payment')).toHaveCount(0)
     await page.waitForTimeout(4_000)
     await expect(page.getByTestId('sats-balance')).toHaveText('0.00077777 BTC')
   } finally {
@@ -130,7 +138,8 @@ test('the admin list shows "manual" for that row, asks LNBits nothing for it, an
 
     await expect(row(page, 'Listed').locator('[data-lnurlp="manual"]')).toHaveText('Manual')
     await expect(row(page, 'Listed').getByRole('button', { name: 'Deposit' })).toHaveAttribute('aria-disabled', 'true')
-    await expect(row(page, 'Listed')).toContainText('Last tx')
+    // Frozen from a wallet without payments: nothing carried over.
+    await expect(row(page, 'Listed')).toContainText('No transactions yet')
     await expect(row(page, 'Test').locator('[data-lnurlp="active"]')).toBeVisible()
     await expect(row(page, 'Nolnurlp').locator('[data-lnurlp="inactive"]')).toBeVisible()
     expect(statusCalls).not.toContain(`/api/admin/piggy-banks/${pb.id}/status`)

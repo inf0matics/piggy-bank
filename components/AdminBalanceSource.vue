@@ -20,7 +20,10 @@
       >
         {{ formatSatsCount(balance.sats) }}
       </p>
-      <p class="text-[11px] text-dimmed mt-1">
+      <p
+        v-if="balance.lastChange"
+        class="text-[11px] text-dimmed mt-1"
+      >
         Last change {{ formatTime(balance.lastChange.time) }}
       </p>
     </template>

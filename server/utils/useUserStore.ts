@@ -7,6 +7,7 @@ import {
   CREATE_USERS_TABLE,
   migrateUsersTable,
   rowToUser,
+  type BalanceChange,
   type UserInput,
   type UserRow,
   type UserSchema,
@@ -100,19 +101,19 @@ export const updateOwnedUser = (id: string, owner: string, input: UserInput): Us
 }
 
 /**
- * Freezes an LNBits piggy bank at `sats` and puts it on the manual source. The
- * freeze is recorded as its first change. The LNBits URL and key are kept.
- * Null when the piggy bank is not the owner's or not on LNBits.
+ * Freezes an LNBits piggy bank at `sats` and puts it on the manual source, with
+ * `lastChange` as its last change (null: none to show). The LNBits URL and key
+ * are kept. Null when the piggy bank is not the owner's or not on LNBits.
  */
-export const switchOwnedUserToManual = (id: string, owner: string, sats: number): UserSchema | null => {
+export const switchOwnedUserToManual = (id: string, owner: string, sats: number, lastChange: BalanceChange | null): UserSchema | null => {
   const result = getDb()
     .prepare(`
       UPDATE users
       SET balance_source = 'manual', manual_sats = ?, manual_changed_at = ?,
-          manual_change_sats = ?, manual_change_comment = NULL
+          manual_change_sats = ?, manual_change_comment = ?
       WHERE id = ? AND owner = ? AND balance_source = 'lnbits'
     `)
-    .run(sats, Math.floor(Date.now() / 1000), sats, id, owner)
+    .run(sats, lastChange?.time ?? null, lastChange?.sats ?? null, lastChange?.comment ?? null, id, owner)
   return result.changes === 0 ? null : getUserById(id)
 }
 

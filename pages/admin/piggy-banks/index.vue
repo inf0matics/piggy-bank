@@ -209,7 +209,7 @@ const lnbitsLastTxText = (status: PiggyBankStatus | undefined): string => {
 
 const rows = computed(() => piggyBanks.value.map((pb) => {
   if (pb.balance.source === 'manual') {
-    return { ...pb, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange.time) }
+    return { ...pb, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange?.time ?? null) }
   }
   const status = statuses.get(pb.id)
   const state: LnurlpState = status?.lnurlp ?? 'checking'
