@@ -72,6 +72,24 @@ test('+10 previews at the current rate, raises the balance and toasts the commen
   }
 })
 
+test('a top-up of an empty piggy bank toasts too', async ({ page }) => {
+  const pb = await createPiggyBank(page, 'Empty', '6436')
+  await page.request.post(`/api/admin/piggy-banks/${pb.id}/manual`, { data: { sats: 0 } })
+
+  try {
+    const child = await openDashboard(page, '6436', '0.00000000 BTC')
+    const form = await changeForm(page, pb)
+
+    await form.amount.fill('+10')
+    await form.confirm.click()
+
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00020000 BTC', { timeout: 15_000 })
+    await expect(toasts(child).getByText('+20000 sats')).toBeVisible()
+  } finally {
+    await deleteByName(page, 'Empty')
+  }
+})
+
 test('-10 lowers the balance without a payment toast', async ({ page }) => {
   const pb = await freeze(page, 'Subtracted', '6431')
 

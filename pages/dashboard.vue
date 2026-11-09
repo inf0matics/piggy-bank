@@ -168,7 +168,9 @@ const fetchDashboard = async () => {
   eur.value = response.eur
   sats.value = response.sats
 
-  if (firstTime && response.sats > 0) {
+  // The first balance is the baseline, even 0: an empty piggy bank's first
+  // top-up is announced like any other.
+  if (firstTime) {
     lastSatsValue = response.sats
     firstTime = false
   }
