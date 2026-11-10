@@ -7,9 +7,9 @@ import { test, expect, type Page } from '@playwright/test'
 
 // #fbad18, the amber primary, as the browser reports background-color.
 const AMBER_RGB = 'rgb(251, 173, 24)'
-// tsp surface backgrounds (--ui-bg) per mode: #212529 dark, #f8f9fa light.
+// tsp page backgrounds (--ui-bg) per mode: #212529 dark, #f1f3f5 light.
 const DARK_BG_RGB = 'rgb(33, 37, 41)'
-const LIGHT_BG_RGB = 'rgb(248, 249, 250)'
+const LIGHT_BG_RGB = 'rgb(241, 243, 245)'
 
 const fontOf = (page: Page, selector: string) =>
   page.evaluate(sel => getComputedStyle(document.querySelector(sel)!).fontFamily, selector)
@@ -81,13 +81,13 @@ test('admin defaults to dark and the sidebar toggle switches to light', async ({
 
   // Default: dark surfaces, amber primary.
   await expect(page.locator('html')).toHaveClass(/dark/)
-  await expect(page.locator('main')).toHaveCSS('background-color', DARK_BG_RGB)
+  await expect(page.getByTestId('tsp-app-shell-content')).toHaveCSS('background-color', DARK_BG_RGB)
   await expect(page.getByRole('link', { name: 'Add piggy bank' })).toHaveCSS('background-color', AMBER_RGB)
 
   // Toggle → light surfaces, but the primary stays amber.
   await page.getByTestId('tsp-theme-toggle').click()
   await expect(page.locator('html')).toHaveClass(/light/)
-  await expect(page.locator('main')).toHaveCSS('background-color', LIGHT_BG_RGB)
+  await expect(page.getByTestId('tsp-app-shell-content')).toHaveCSS('background-color', LIGHT_BG_RGB)
   await expect(page.getByRole('link', { name: 'Add piggy bank' })).toHaveCSS('background-color', AMBER_RGB)
 })
 
@@ -99,7 +99,7 @@ test('the admin light preference is remembered across a reload', async ({ page }
 
   await page.reload()
   await expect(page.locator('html')).toHaveClass(/light/)
-  await expect(page.locator('main')).toHaveCSS('background-color', LIGHT_BG_RGB)
+  await expect(page.getByTestId('tsp-app-shell-content')).toHaveCSS('background-color', LIGHT_BG_RGB)
 })
 
 test('the public area stays light even when admin is set to light', async ({ page }) => {
