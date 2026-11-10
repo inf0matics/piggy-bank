@@ -1,6 +1,55 @@
 # Changelog
 
 
+## v1.17.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.16.0...v1.17.0)
+
+### 🚀 Enhancements
+
+- Keep the app usable while LNbits is unreachable ([cb04167](https://github.com/inf0matics/piggy-bank/commit/cb04167))
+- Switch a piggy bank to a manual balance source ([7bcaf46](https://github.com/inf0matics/piggy-bank/commit/7bcaf46))
+- Change a manual balance in EUR ([7b5148c](https://github.com/inf0matics/piggy-bank/commit/7b5148c))
+- Switch a manual piggy bank back to LNbits ([764a09c](https://github.com/inf0matics/piggy-bank/commit/764a09c))
+- Move the privacy policy to /privacy with the spec's content ([bb895d6](https://github.com/inf0matics/piggy-bank/commit/bb895d6))
+- **admin:** Adopt theme 0.4.2 and TspAppShell for the admin frame ([28d9bb2](https://github.com/inf0matics/piggy-bank/commit/28d9bb2))
+- **admin:** TspPageHeader and TspAccountPage for the admin pages ([7b8b9a6](https://github.com/inf0matics/piggy-bank/commit/7b8b9a6))
+
+### 🩹 Fixes
+
+- **review:** Treat proxy error pages as unreachable, keep balance on LNURL-p failure ([ac91adb](https://github.com/inf0matics/piggy-bank/commit/ac91adb))
+- **review:** Cache Kraken failures briefly and harden the freeze dialog ([a9530da](https://github.com/inf0matics/piggy-bank/commit/a9530da))
+- **admin:** Keep the last LNbits payment when freezing ([1f57a93](https://github.com/inf0matics/piggy-bank/commit/1f57a93))
+- **review:** No "+undefined sats" toast without a payment; 404 for a piggy bank deleted mid-freeze ([d355b6a](https://github.com/inf0matics/piggy-bank/commit/d355b6a))
+- **review:** Toast the first top-up of a dashboard opened at 0 sats ([2a05efa](https://github.com/inf0matics/piggy-bank/commit/2a05efa))
+- **review:** Toast by payment time, so a pending invoice still toasts and switching back does not ([a909b5e](https://github.com/inf0matics/piggy-bank/commit/a909b5e))
+- **review:** State the carried-over payment, local storage and admin setting in the privacy policy ([9be68a8](https://github.com/inf0matics/piggy-bank/commit/9be68a8))
+
+### 💅 Refactors
+
+- **admin:** Derive each row's LNbits state once ([f44a375](https://github.com/inf0matics/piggy-bank/commit/f44a375))
+- **admin:** Freeze in one UPDATE, look up the owner only when nothing changed ([6714cad](https://github.com/inf0matics/piggy-bank/commit/6714cad))
+- Reuse the shared e2e admin helpers, keep eurToSats private ([4177770](https://github.com/inf0matics/piggy-bank/commit/4177770))
+- Share the whole-sats schema, narrow the switch-back dialog directly ([4eec372](https://github.com/inf0matics/piggy-bank/commit/4eec372))
+- **e2e:** Read the icon-gate log with a large buffer, tidy teardown ([36486e0](https://github.com/inf0matics/piggy-bank/commit/36486e0))
+
+### 📦 Build
+
+- **docker:** Install from lockfile ([70fb478](https://github.com/inf0matics/piggy-bank/commit/70fb478))
+
+### 🏡 Chore
+
+- Run on Node 26 ([fb0c901](https://github.com/inf0matics/piggy-bank/commit/fb0c901))
+
+### ✅ Tests
+
+- **e2e:** Add an unreachable switch to the LNbits mock ([a39de33](https://github.com/inf0matics/piggy-bank/commit/a39de33))
+- **admin:** Cover the LNURL-auth line, title drift and the icon detector ([7b3aa56](https://github.com/inf0matics/piggy-bank/commit/7b3aa56))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.16.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.15.0...v1.16.0)
