@@ -16,7 +16,7 @@
     "test:unit": "node --test \"test/unit/**/*.test.ts\""
   },
   "dependencies": {
-    "@logto/nuxt": "^1.2.11",
+    "@logto/nuxt": "^2.0.3",
     "@nuxt/ui": "^4.12.0",
     "@thespielplatz/nuxt-auth": "^1.1.3",
     "nuxt": "^4.6.4",
