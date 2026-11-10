@@ -1,20 +1,18 @@
 <template>
   <div>
-    <div class="flex items-center gap-2 mb-6">
-      <NuxtLink
-        to="/admin/piggy-banks"
-        aria-label="Back"
-        class="text-dimmed hover:text-highlighted"
-      >
-        <UIcon
-          name="i-tabler-arrow-left"
-          class="text-lg"
-        />
-      </NuxtLink>
-      <h1 class="font-bold text-2xl text-highlighted">
-        Edit piggy bank
-      </h1>
-    </div>
+    <!-- Navigation, not title: the back arrow takes its own line above the
+         header, which has no slot for it (raised with the theme). -->
+    <NuxtLink
+      to="/admin/piggy-banks"
+      aria-label="Back"
+      class="inline-flex mb-2 text-dimmed hover:text-highlighted"
+    >
+      <UIcon
+        name="i-tabler-arrow-left"
+        class="text-lg"
+      />
+    </NuxtLink>
+    <TspPageHeader title="Edit piggy bank" />
 
     <AdminBalanceSource
       v-if="record"
@@ -38,6 +36,7 @@ import type { Balance } from '~/server/domain/user'
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
+  title: 'Edit piggy bank',
 })
 
 const id = useRoute().params.id as string

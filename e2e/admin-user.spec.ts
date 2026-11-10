@@ -18,10 +18,10 @@ test.beforeEach(async ({ page }) => {
   }])
 })
 
-test('the LogTo account-center link points at the account security page and opens in a new tab', async ({ page }) => {
+test('the Logto account-center link points at the account security page and opens in a new tab', async ({ page }) => {
   await page.goto('/admin/user')
 
-  const link = page.getByTestId('account-center-link')
+  const link = page.getByRole('link', { name: 'Manage account in Logto' })
   await expect(link).toBeVisible()
   await expect(link).toHaveAttribute('href', 'https://logto.example.com/account/security')
   await expect(link).toHaveAttribute('target', '_blank')

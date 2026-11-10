@@ -1,20 +1,18 @@
 <template>
   <div>
-    <div class="flex items-center gap-2 mb-6">
-      <NuxtLink
-        to="/admin/piggy-banks"
-        aria-label="Back"
-        class="text-dimmed hover:text-highlighted"
-      >
-        <UIcon
-          name="i-tabler-arrow-left"
-          class="text-lg"
-        />
-      </NuxtLink>
-      <h1 class="font-bold text-2xl text-highlighted">
-        Add piggy bank
-      </h1>
-    </div>
+    <!-- Navigation, not title: the back arrow takes its own line above the
+         header, which has no slot for it (raised with the theme). -->
+    <NuxtLink
+      to="/admin/piggy-banks"
+      aria-label="Back"
+      class="inline-flex mb-2 text-dimmed hover:text-highlighted"
+    >
+      <UIcon
+        name="i-tabler-arrow-left"
+        class="text-lg"
+      />
+    </NuxtLink>
+    <TspPageHeader title="Add piggy bank" />
 
     <AdminPiggyBankForm
       :initial="initial"
@@ -30,6 +28,7 @@ import type { PiggyBankFormValues } from '~/components/AdminPiggyBankForm.vue'
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
+  title: 'Add piggy bank',
 })
 
 // Pre-fill the LNBits URL with the configured default from Settings.

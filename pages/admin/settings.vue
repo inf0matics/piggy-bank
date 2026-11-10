@@ -1,8 +1,6 @@
 <template>
   <div>
-    <h1 class="font-bold text-2xl text-highlighted mb-6">
-      Settings
-    </h1>
+    <TspPageHeader title="Settings" />
 
     <form
       class="bg-elevated rounded-[10px] border border-default p-6 max-w-[480px]"
@@ -52,6 +50,7 @@
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
+  title: 'Settings',
 })
 
 const { data: settings } = await useFetch<{ defaultLnbitsUrl: string }>('/api/admin/settings')

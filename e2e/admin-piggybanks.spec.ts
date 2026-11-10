@@ -253,13 +253,13 @@ test('delete: trash opens a confirmation popup and confirming removes the row', 
 test('the sidebar User entry opens a user page with the account details', async ({ page }) => {
   await page.goto('/admin/piggy-banks')
 
-  const sidebarUser = page.getByTestId('logto-account')
-  await expect(sidebarUser).toContainText('E2E Admin')
+  const sidebarUser = page.getByTestId('tsp-sidebar').getByRole('link', { name: 'E2E Admin' })
+  await expect(sidebarUser).toBeVisible()
 
   await sidebarUser.click()
   await page.waitForURL('**/admin/user')
 
-  const card = page.getByTestId('user-account')
+  const card = page.getByTestId('tsp-user-card')
   await expect(card).toContainText('E2E Admin')
   await expect(card).toContainText('tsp.tools account')
 

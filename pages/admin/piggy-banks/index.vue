@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div class="flex items-center gap-3 mb-6">
-      <h1 class="font-bold text-2xl text-highlighted">
-        Piggy Banks
-      </h1>
-      <span class="flex-1" />
+    <TspPageHeader title="Piggy Banks" />
+
+    <!-- The header has no actions slot, so the primary action takes its own
+         row under it (raised with the theme). -->
+    <div class="mb-6">
       <NuxtLink
         to="/admin/piggy-banks/new"
         class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-600 text-inverted font-bold text-sm px-4 py-1.5 rounded-lg"
@@ -147,6 +147,7 @@ import type { Balance } from '~/server/domain/user'
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
+  title: 'Piggy Banks',
 })
 
 interface PiggyBankListItem {
