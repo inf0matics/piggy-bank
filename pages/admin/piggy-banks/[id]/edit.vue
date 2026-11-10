@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Navigation, not title: the back arrow takes its own line above the
-         header, which has no slot for it (raised with the theme). -->
+         header, which has no slot for it. -->
     <NuxtLink
       to="/admin/piggy-banks"
       aria-label="Back"

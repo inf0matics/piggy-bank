@@ -3,7 +3,7 @@
     <TspPageHeader title="Piggy Banks" />
 
     <!-- The header has no actions slot, so the primary action takes its own
-         row under it (raised with the theme). -->
+         row under it. -->
     <div class="mb-6">
       <NuxtLink
         to="/admin/piggy-banks/new"
