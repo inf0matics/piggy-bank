@@ -56,6 +56,18 @@ describe('admin page headings', () => {
       assert.match(read(path), /definePageMeta\(\{[^}]*\btitle:\s*'[^']+'/, path)
     }
   })
+
+  it('the top bar\'s title and the page header\'s are the same', () => {
+    // definePageMeta is a compiler macro and cannot share a constant with the
+    // template, so the title is written twice; this keeps the two in step.
+    const pages = vueFiles('pages/admin').filter(path => /layout:\s*'admin'/.test(read(path)))
+    for (const path of pages) {
+      const source = read(path)
+      const metaTitle = source.match(/definePageMeta\(\{[^}]*\btitle:\s*'([^']+)'/)?.[1]
+      const headerTitle = source.match(/<Tsp(?:PageHeader|AccountPage)\s[^>]*?\btitle="([^"]+)"/)?.[1]
+      assert.equal(headerTitle, metaTitle, path)
+    }
+  })
 })
 
 describe('pages/admin/user.vue', () => {

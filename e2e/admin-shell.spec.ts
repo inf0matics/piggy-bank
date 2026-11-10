@@ -115,6 +115,23 @@ test.describe('admin shell', () => {
     await card.getByRole('button', { name: 'Hide ID' }).click()
     await expect(card).not.toContainText('e2e-admin')
   })
+
+  test('the LNURL-auth line sits below the account card, not inside it', async ({ page }) => {
+    // The e2e stack has no Logto userinfo, so the server never reports an
+    // LNURL-auth identity. Answer the client-side fetch of a navigation instead.
+    await page.goto('/admin/piggy-banks')
+    await page.route('**/api/admin/me', route => route.fulfill({
+      json: { sub: 'e2e-admin', name: 'E2E Admin', accountCenterUrl: null, lnurlAuth: true },
+    }))
+    await sidebar(page).getByRole('link', { name: 'E2E Admin' }).click()
+    await page.waitForURL('**/admin/user')
+
+    const status = page.getByTestId('lnurl-auth-status')
+    await expect(status).toHaveText('Connected via LNURL-auth')
+    await expect(page.getByTestId('tsp-user-card').getByTestId('lnurl-auth-status')).toHaveCount(0)
+    const card = (await page.getByTestId('tsp-user-card').boundingBox())!
+    expect((await status.boundingBox())!.y).toBeGreaterThanOrEqual(card.y + card.height)
+  })
 })
 
 test.describe('admin shell at mobile width', () => {
