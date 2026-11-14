@@ -31,20 +31,42 @@
         :sats="balance.sats"
         @changed="emit('changed')"
       />
-      <AdminSwitchBack
-        :piggy-bank-id="piggyBankId"
-        :sats="balance.sats"
-        @changed="emit('changed')"
-      />
+      <div class="mt-5 pt-4 border-t border-default">
+        <p class="text-[11px] text-muted mb-3">
+          Put the piggy bank on LNBits or on marbles with the settings saved below. To use other
+          settings, change and save them first.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <AdminSwitchBack
+            :piggy-bank-id="piggyBankId"
+            source="lnbits"
+            :sats="balance.sats"
+            @changed="emit('changed')"
+          />
+          <AdminSwitchBack
+            :piggy-bank-id="piggyBankId"
+            source="marbles"
+            :sats="balance.sats"
+            :disabled="!hasMarbles"
+            @changed="emit('changed')"
+          />
+        </div>
+        <p
+          v-if="!hasMarbles"
+          class="text-[11px] text-dimmed mt-2"
+        >
+          Save the marbles settings below to switch to marbles.
+        </p>
+      </div>
     </template>
 
     <template v-else>
       <p class="text-sm font-bold text-highlighted">
-        LNBits
+        {{ sourceName }}
       </p>
       <p class="text-[11px] text-muted mt-1.5 mb-3">
-        The balance is read from the LNBits wallet. Switch to manual to freeze it and
-        manage it here. The LNBits URL and key are kept.
+        The balance is read from the {{ sourceName }} wallet. Switch to manual to freeze it and
+        manage it here. The {{ sourceName }} settings are kept.
       </p>
       <button
         type="button"
@@ -62,23 +84,23 @@
     >
       <template #body>
         <p
-          v-if="lnbitsSats === undefined"
+          v-if="walletSats === undefined"
           class="text-sm text-muted"
         >
-          Reading the LNBits balance…
+          Reading the {{ sourceName }} balance…
         </p>
         <p
-          v-else-if="lnbitsSats !== null"
-          data-testid="lnbits-balance"
+          v-else-if="walletSats !== null"
+          data-testid="wallet-balance"
           class="text-sm text-muted"
         >
-          The LNBits balance is
-          <span class="font-bold text-highlighted">{{ formatSatsCount(lnbitsSats) }}</span>.
-          It becomes the starting balance, and the balance is no longer read from LNBits.
+          The {{ sourceName }} balance is
+          <span class="font-bold text-highlighted">{{ formatSatsCount(walletSats) }}</span>.
+          It becomes the starting balance, and the balance is no longer read from {{ sourceName }}.
         </p>
         <template v-else>
           <p class="text-sm text-muted mb-3">
-            The balance cannot be read from LNBits right now. Enter the starting balance.
+            The balance cannot be read from {{ sourceName }} right now. Enter the starting balance.
           </p>
           <label
             for="startingSats"
@@ -125,11 +147,13 @@
 // auto-imported utils in template scope, only in <script>.
 import formatTime from '~/utils/formatTime'
 import type { Balance } from '~/server/domain/user'
-import type { WalletRead } from '~/utils/switchBack'
+import { SOURCE_NAMES, type WalletRead } from '~/utils/switchBack'
 
 const props = defineProps<{
   piggyBankId: string
   balance: Balance
+  // Whether marbles settings are saved, so the piggy bank can switch to marbles.
+  hasMarbles: boolean
 }>()
 
 const emit = defineEmits<{
@@ -138,16 +162,18 @@ const emit = defineEmits<{
 
 const formatSatsCount = (sats: number) => `${sats.toLocaleString('en-US')} sats`
 
+const sourceName = computed(() => props.balance.source === 'manual' ? '' : SOURCE_NAMES[props.balance.source])
+
 const switchOpen = ref(false)
-// undefined: still reading; null: LNBits could not give a balance.
-const lnbitsSats = ref<number | null | undefined>(undefined)
+// undefined: still reading; null: the wallet could not give a balance.
+const walletSats = ref<number | null | undefined>(undefined)
 const enteredSats = ref('')
 const switching = ref(false)
 const error = ref<string | null>(null)
 
 const startingSats = computed((): number | null => {
-  if (lnbitsSats.value === undefined) return null
-  if (lnbitsSats.value !== null) return lnbitsSats.value
+  if (walletSats.value === undefined) return null
+  if (walletSats.value !== null) return walletSats.value
   const text = enteredSats.value.trim()
   return /^\d+$/.test(text) ? Number(text) : null
 })
@@ -157,18 +183,19 @@ const startingSats = computed((): number | null => {
 let readId = 0
 
 const openSwitch = async () => {
+  if (props.balance.source === 'manual') return
   const id = ++readId
-  lnbitsSats.value = undefined
+  walletSats.value = undefined
   enteredSats.value = ''
   error.value = null
   switchOpen.value = true
   let sats: number | null
   try {
-    sats = (await $fetch<WalletRead>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)).sats
+    sats = (await $fetch<WalletRead>(`/api/admin/piggy-banks/${props.piggyBankId}/${props.balance.source}-balance`)).sats
   } catch {
     sats = null
   }
-  if (id === readId) lnbitsSats.value = sats
+  if (id === readId) walletSats.value = sats
 }
 
 const confirmSwitch = async () => {

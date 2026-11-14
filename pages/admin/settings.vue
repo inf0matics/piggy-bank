@@ -27,6 +27,27 @@
         </p>
       </div>
 
+      <p class="font-bold text-base mt-6 mb-4 text-highlighted">
+        marbles defaults
+      </p>
+
+      <div class="mb-2">
+        <label
+          for="default-marbles-url"
+          class="block text-xs font-bold text-muted mb-1.5"
+        >Default marbles URL</label>
+        <input
+          id="default-marbles-url"
+          v-model="defaultMarblesUrl"
+          type="text"
+          placeholder="https://marbles.example.com"
+          class="w-full px-3 py-2 border border-default rounded-lg text-sm bg-default text-default focus:outline-none focus:border-primary"
+        >
+        <p class="text-[11px] text-muted mt-1.5">
+          Pre-fills a piggy bank's marbles URL while it has none. Can be overridden per record.
+        </p>
+      </div>
+
       <p
         v-if="saved"
         class="text-sm text-success mt-3"
@@ -53,9 +74,10 @@ definePageMeta({
   title: 'Settings',
 })
 
-const { data: settings } = await useFetch<{ defaultLnbitsUrl: string }>('/api/admin/settings')
+const { data: settings } = await useFetch<{ defaultLnbitsUrl: string, defaultMarblesUrl: string }>('/api/admin/settings')
 
 const defaultLnbitsUrl = ref(settings.value?.defaultLnbitsUrl ?? '')
+const defaultMarblesUrl = ref(settings.value?.defaultMarblesUrl ?? '')
 const submitting = ref(false)
 const saved = ref(false)
 
@@ -65,7 +87,7 @@ const save = async () => {
   try {
     await $fetch('/api/admin/settings', {
       method: 'PUT',
-      body: { defaultLnbitsUrl: defaultLnbitsUrl.value },
+      body: { defaultLnbitsUrl: defaultLnbitsUrl.value, defaultMarblesUrl: defaultMarblesUrl.value },
     })
     saved.value = true
   } finally {

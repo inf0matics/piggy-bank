@@ -1,44 +1,41 @@
 <template>
-  <div class="mt-5 pt-4 border-t border-default">
-    <p class="text-[11px] text-muted mb-3">
-      Put the piggy bank back on LNBits with the URL and invoice key saved below. To use another
-      LNBits instance, change and save them first.
-    </p>
+  <div>
     <button
       type="button"
-      class="inline-flex items-center gap-1.5 border border-primary/60 text-primary hover:bg-primary/10 text-sm font-bold px-3 py-1.5 rounded-lg"
+      :disabled="disabled"
+      class="inline-flex items-center gap-1.5 border border-primary/60 text-primary hover:bg-primary/10 disabled:opacity-50 disabled:hover:bg-transparent disabled:cursor-not-allowed text-sm font-bold px-3 py-1.5 rounded-lg"
       @click="open"
     >
       <UIcon name="i-tabler-lock-open" />
-      Switch back to LNBits
+      {{ label }}
     </button>
 
     <UModal
       v-model:open="dialogOpen"
-      title="Switch back to LNBits"
+      :title="label"
     >
       <template #body>
         <p
           v-if="wallet === undefined"
           class="text-sm text-muted"
         >
-          Reading the LNBits balance…
+          Reading the {{ name }} balance…
         </p>
         <p
           v-else-if="wallet.sats === null"
           data-testid="switch-back-refused"
           class="text-sm text-error"
         >
-          {{ WALLET_UNREADABLE.lnbits[wallet.reason] }}
+          {{ WALLET_UNREADABLE[source][wallet.reason] }}
         </p>
         <p
           v-else-if="wallet.sats === sats"
           data-testid="balances-equal"
           class="text-sm text-muted"
         >
-          The LNBits balance is
+          The {{ name }} balance is
           <span class="font-bold text-highlighted">{{ withEur(wallet.sats) }}</span>,
-          the same as the manual balance. From now on the balance is read from LNBits.
+          the same as the manual balance. From now on the balance is read from {{ name }}.
         </p>
         <template v-else>
           <dl
@@ -55,10 +52,10 @@
               {{ withEur(sats) }}
             </dd>
             <dt class="text-muted">
-              LNBits balance
+              {{ name }} balance
             </dt>
             <dd
-              data-testid="compare-lnbits"
+              :data-testid="`compare-${source}`"
               class="text-highlighted text-right"
             >
               {{ withEur(wallet.sats) }}
@@ -80,13 +77,13 @@
             EUR values are unavailable right now.
           </p>
           <p class="text-sm text-muted mt-3">
-            After switching, the LNBits balance is the balance and the manual balance is no longer
+            After switching, the {{ name }} balance is the balance and the manual balance is no longer
             used. The app moves no money: settle the difference in the wallet yourself.
           </p>
           <UCheckbox
             v-model="acknowledged"
             class="mt-3"
-            :label="`Use the LNBits balance of ${satsCount.format(wallet.sats)} sats`"
+            :label="`Use the ${name} balance of ${satsCount.format(wallet.sats)} sats`"
           />
         </template>
         <p
@@ -105,7 +102,7 @@
             @click="dialogOpen = false"
           />
           <UButton
-            label="Switch to LNBits"
+            :label="`Switch to ${name}`"
             :disabled="!canConfirm"
             :loading="switching"
             @click="confirm"
@@ -118,17 +115,23 @@
 
 <script setup lang="ts">
 import { satsToEur } from '~/utils/manualBalanceChange'
-import { WALLET_UNREADABLE, type WalletRead } from '~/utils/switchBack'
+import { SOURCE_NAMES, WALLET_UNREADABLE, type WalletRead, type WalletSource } from '~/utils/switchBack'
 
 const props = defineProps<{
   piggyBankId: string
+  // The wallet the manual piggy bank switches to.
+  source: WalletSource
   // The manual balance.
   sats: number
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   changed: []
 }>()
+
+const name = computed(() => SOURCE_NAMES[props.source])
+const label = computed(() => props.source === 'lnbits' ? 'Switch back to LNBits' : 'Switch to marbles')
 
 const dialogOpen = ref(false)
 // undefined: still reading.
@@ -166,7 +169,7 @@ const open = async () => {
   dialogOpen.value = true
 
   const [read, btcRate] = await Promise.all([
-    $fetch<WalletRead>(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits-balance`)
+    $fetch<WalletRead>(`/api/admin/piggy-banks/${props.piggyBankId}/${props.source}-balance`)
       .catch((): WalletRead => ({ sats: null, reason: 'unreachable' })),
     $fetch<{ rate: number | null }>('/api/admin/btc-rate')
       .then(r => r.rate)
@@ -182,9 +185,9 @@ const confirm = async () => {
   error.value = null
   switching.value = true
   try {
-    await $fetch(`/api/admin/piggy-banks/${props.piggyBankId}/lnbits`, {
+    await $fetch(`/api/admin/piggy-banks/${props.piggyBankId}/${props.source}`, {
       method: 'POST',
-      body: { manualSats: props.sats, lnbitsSats: wallet.value.sats },
+      body: { manualSats: props.sats, [`${props.source}Sats`]: wallet.value.sats },
     })
     dialogOpen.value = false
     emit('changed')

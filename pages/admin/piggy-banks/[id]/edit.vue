@@ -18,6 +18,7 @@
       v-if="record"
       :piggy-bank-id="id"
       :balance="record.balance"
+      :has-marbles="record.marblesKey !== ''"
       @changed="refresh"
     />
 
@@ -41,14 +42,10 @@ definePageMeta({
 
 const id = useRoute().params.id as string
 
-const { data: record, refresh } = await useFetch<{
-  id: string
-  name: string
-  accessKey: string
-  lnbitsUrl: string
-  invoiceKey: string
-  balance: Balance
-}>(`/api/admin/piggy-banks/${id}`)
+const [{ data: record, refresh }, { data: settings }] = await Promise.all([
+  useFetch<PiggyBankFormValues & { id: string, balance: Balance }>(`/api/admin/piggy-banks/${id}`),
+  useFetch<{ defaultMarblesUrl: string }>('/api/admin/settings'),
+])
 
 if (!record.value) {
   throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
@@ -59,6 +56,10 @@ const initial: PiggyBankFormValues = {
   accessKey: record.value.accessKey,
   lnbitsUrl: record.value.lnbitsUrl,
   invoiceKey: record.value.invoiceKey,
+  // Without marbles settings yet, the default marbles URL pre-fills the field.
+  marblesUrl: record.value.marblesUrl || settings.value?.defaultMarblesUrl || '',
+  marblesKey: record.value.marblesKey,
+  marblesWallet: record.value.marblesWallet,
 }
 
 const save = async (values: PiggyBankFormValues) => {

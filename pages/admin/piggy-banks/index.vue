@@ -34,7 +34,7 @@
         >
           <span class="font-bold text-sm text-highlighted group-hover:underline">{{ pb.name }}</span>
           <span class="text-dimmed mx-1">@</span>
-          <span class="text-sm text-muted group-hover:underline">{{ hostOf(pb.lnbitsUrl) }}</span>
+          <span class="text-sm text-muted group-hover:underline">{{ hostOf(pb.walletUrl) }}</span>
         </NuxtLink>
         <div class="flex items-center gap-1 mt-0.5 text-[11px] text-dimmed">
           <UIcon name="i-tabler-clock" />
@@ -55,6 +55,12 @@
           <UIcon :name="revealed.has(pb.id) ? 'i-tabler-eye-off' : 'i-tabler-eye'" />
         </button>
       </div>
+
+      <span
+        v-if="pb.balance.source === 'marbles'"
+        data-testid="pb-source"
+        class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-accented text-highlighted shrink-0"
+      >marbles</span>
 
       <div
         :data-lnurlp="pb.state"
@@ -104,7 +110,7 @@
           Are you sure? Do you want to delete
           <span class="font-bold text-highlighted">"{{ target?.name }}"</span>
           connected to
-          <span class="font-bold text-highlighted break-all">{{ target?.lnbitsUrl }}</span>?
+          <span class="font-bold text-highlighted break-all">{{ target && walletUrlOf(target) }}</span>?
         </p>
       </template>
       <template #footer>
@@ -155,10 +161,11 @@ interface PiggyBankListItem {
   name: string
   accessKey: string
   lnbitsUrl: string
+  marblesUrl: string | null
   balance: Balance
 }
 
-// `manual`: the balance is held in the app; the row needs nothing from LNBits.
+// `manual`: the balance is held in the app; the row needs nothing from a wallet.
 type LnurlpState = 'checking' | 'active' | 'inactive' | 'unreachable' | 'manual'
 
 interface PiggyBankStatus {
@@ -172,8 +179,8 @@ const { data: piggyBanks, refresh } = await useFetch<PiggyBankListItem[]>('/api/
   default: () => [],
 })
 
-// LNBits state per LNBits row, loaded after the list renders — one request per
-// row, so a slow or dead LNBits only holds up its own row.
+// Wallet state per LNBits or marbles row, loaded after the list renders — one
+// request per row, so a slow or dead wallet only holds up its own row.
 const statuses = reactive(new Map<string, PiggyBankStatus>())
 const UNREACHABLE: PiggyBankStatus = { lnurlp: 'unreachable', lnurl: null, address: null, lastPaymentTime: null }
 
@@ -187,7 +194,7 @@ const loadStatus = async (id: string) => {
 
 onMounted(() => {
   for (const pb of piggyBanks.value) {
-    if (pb.balance.source === 'lnbits') loadStatus(pb.id)
+    if (pb.balance.source !== 'manual') loadStatus(pb.id)
   }
 })
 
@@ -199,10 +206,20 @@ const BADGES: Record<LnurlpState, { label: string, ariaLabel: string, pill: stri
   manual: { label: 'Manual', ariaLabel: 'Manual balance', pill: 'bg-accented text-highlighted', dot: 'bg-primary', depositHint: 'Manual balance, no deposit' },
 }
 
+// A marbles row's deposit option is its newest active pay link.
+const MARBLES_BADGES: Record<Exclude<LnurlpState, 'manual'>, typeof BADGES[LnurlpState]> = {
+  checking: { ...BADGES.checking, label: 'Pay link', ariaLabel: 'Pay link checking', depositHint: 'Checking marbles…' },
+  active: { ...BADGES.active, label: 'Pay link', ariaLabel: 'Pay link active' },
+  inactive: { ...BADGES.inactive, label: 'Pay link', ariaLabel: 'Pay link inactive', depositHint: 'No active pay link' },
+  unreachable: { ...BADGES.unreachable, ariaLabel: 'marbles unreachable', depositHint: 'marbles unreachable' },
+}
+
+const walletUrlOf = (pb: PiggyBankListItem) => pb.balance.source === 'marbles' && pb.marblesUrl ? pb.marblesUrl : pb.lnbitsUrl
+
 const lastTxText = (time: number | null): string =>
   time ? `Last tx ${formatTime(time)}` : 'No transactions yet'
 
-const lnbitsLastTxText = (status: PiggyBankStatus | undefined): string => {
+const walletLastTxText = (status: PiggyBankStatus | undefined): string => {
   if (!status) return 'Checking…'
   if (status.lnurlp === 'unreachable') return 'Last tx unknown'
   return lastTxText(status.lastPaymentTime)
@@ -210,11 +227,12 @@ const lnbitsLastTxText = (status: PiggyBankStatus | undefined): string => {
 
 const rows = computed(() => piggyBanks.value.map((pb) => {
   if (pb.balance.source === 'manual') {
-    return { ...pb, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange?.time ?? null) }
+    return { ...pb, walletUrl: pb.lnbitsUrl, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange?.time ?? null) }
   }
   const status = statuses.get(pb.id)
-  const state: LnurlpState = status?.lnurlp ?? 'checking'
-  return { ...pb, state, badge: BADGES[state], lastTx: lnbitsLastTxText(status) }
+  const state = status?.lnurlp ?? 'checking'
+  const badge = pb.balance.source === 'marbles' ? MARBLES_BADGES[state] : BADGES[state]
+  return { ...pb, walletUrl: walletUrlOf(pb), state, badge, lastTx: walletLastTxText(status) }
 }))
 
 const revealed = reactive(new Set<string>())

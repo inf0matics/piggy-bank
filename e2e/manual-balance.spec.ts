@@ -32,7 +32,7 @@ test('switching with LNBits reachable freezes the LNBits balance and keeps its l
 
   try {
     const dialog = await openSwitchDialog(page, pb)
-    await expect(dialog.getByTestId('lnbits-balance')).toContainText('123,456 sats')
+    await expect(dialog.getByTestId('wallet-balance')).toContainText('123,456 sats')
     await dialog.getByRole('button', { name: 'Switch to manual' }).click()
 
     await expect(page.getByTestId('manual-balance')).toHaveText('123,456 sats')

@@ -38,16 +38,24 @@ db.exec(`
 `)
 
 const upsert = db.prepare(`
-  INSERT OR REPLACE INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key, owner)
-  VALUES (?, ?, ?, ?, ?, ?)
+  INSERT OR REPLACE INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key, owner,
+    balance_source, marbles_url, marbles_key, marbles_wallet)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `)
+
+// The marbles mock (e2e/mocks/marbles): any well-formed key reaches its one wallet.
+const MARBLES = process.env.MARBLES_MOCK_URL || 'http://marbles-mock'
+const marbles = ['marbles', MARBLES, `mbl_${'dana'.padEnd(43, '0')}`, 'PiggyWallet00001']
+const lnbits = ['lnbits', null, null, null]
 
 const rows = [
   // Active LNURL-p (the mock serves a link for any key except `no-lnurlp-key`).
-  ['dev-alice', 'Alice', '0000', MOCK, 'alice-invoice-key', OWNER],
-  ['dev-bob', 'Bob', '1234', MOCK, 'bob-invoice-key', OWNER],
+  ['dev-alice', 'Alice', '0000', MOCK, 'alice-invoice-key', OWNER, ...lnbits],
+  ['dev-bob', 'Bob', '1234', MOCK, 'bob-invoice-key', OWNER, ...lnbits],
   // Inactive: the mock returns no LNURL-p links for this invoice key.
-  ['dev-carol', 'Carol', '5678', MOCK, 'no-lnurlp-key', OWNER],
+  ['dev-carol', 'Carol', '5678', MOCK, 'no-lnurlp-key', OWNER, ...lnbits],
+  // Reads its balance from the marbles mock.
+  ['dev-dana', 'Dana', '2468', MOCK, 'dana-invoice-key', OWNER, ...marbles],
 ]
 for (const r of rows) upsert.run(...r)
 

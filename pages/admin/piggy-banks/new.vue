@@ -31,14 +31,17 @@ definePageMeta({
   title: 'Add piggy bank',
 })
 
-// Pre-fill the LNBits URL with the configured default from Settings.
-const { data: settings } = await useFetch<{ defaultLnbitsUrl: string }>('/api/admin/settings')
+// Pre-fill the LNBits and marbles URLs with the configured defaults from Settings.
+const { data: settings } = await useFetch<{ defaultLnbitsUrl: string, defaultMarblesUrl: string }>('/api/admin/settings')
 
 const initial: PiggyBankFormValues = {
   name: '',
   accessKey: '',
   lnbitsUrl: settings.value?.defaultLnbitsUrl ?? '',
   invoiceKey: '',
+  marblesUrl: settings.value?.defaultMarblesUrl ?? '',
+  marblesKey: '',
+  marblesWallet: '',
 }
 
 const create = async (values: PiggyBankFormValues) => {

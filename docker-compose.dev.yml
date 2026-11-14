@@ -1,11 +1,13 @@
-# Dev stack: the piggybank app in `nuxt dev` (hot reload) + the LNBits mock,
-# pre-seeded so you can just look at and click through the running app.
+# Dev stack: the piggybank app in `nuxt dev` (hot reload) + the LNBits and
+# marbles mocks, pre-seeded so you can just look at and click through the
+# running app.
 #
 #   docker compose -f docker-compose.dev.yml up
 #
 # Then: http://localhost:3000/admin -> "Dev login (skip Logto)" -> the admin
-# area shows the seeded piggy banks (Alice/Bob active, Carol inactive) with live
-# balance/LNURL-p from the mock, and /admin/user shows the LogTo account link.
+# area shows the seeded piggy banks (Alice/Bob active, Carol inactive, Dana on
+# marbles) with live balance/LNURL-p from the mocks, and /admin/user shows the
+# LogTo account link.
 #
 # Runs `nuxt dev` (NOT the production build) on purpose: the "Dev login (skip
 # Logto)" button only renders when import.meta.dev is true. The repo is
@@ -19,6 +21,14 @@ services:
     # e.g. POST http://localhost:5001/test/payment {"sats":2100}.
     ports:
       - '5001:80'
+
+  marbles-mock:
+    build:
+      context: ./e2e/mocks/marbles
+    # The app reaches it at http://marbles-mock. Host port 5002 for the control
+    # API, e.g. POST http://localhost:5002/test/payment {"sats":2100}.
+    ports:
+      - '5002:80'
 
   piggybank:
     image: node:26-slim
@@ -58,6 +68,8 @@ services:
       - '24678:24678'
     depends_on:
       lnbits-mock:
+        condition: service_healthy
+      marbles-mock:
         condition: service_healthy
 
 volumes:

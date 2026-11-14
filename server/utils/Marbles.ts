@@ -45,7 +45,7 @@ const DEFAULT_RETRY_AFTER_MS = 60_000
 const Msat = z.string().regex(/^(0|[1-9]\d*)$/)
 
 /** Whole sats from an msat integer string, rounded down (BigInt: exact beyond 2^53 msat). */
-const msatToSats = (msat: string): number => Number(BigInt(msat) / 1000n)
+const msatToSats = (msat: string): number => Number(BigInt(msat) / BigInt(1000))
 
 const WalletAnswer = z.object({
   name: z.string(),

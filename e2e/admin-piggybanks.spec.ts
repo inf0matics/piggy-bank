@@ -153,7 +153,7 @@ test('test connection: reports connectivity and LNURL-p status', async ({ page }
   await page.goto('/admin/piggy-banks/new')
   const url = page.locator('#lnbitsUrl')
   const key = page.locator('#invoiceKey')
-  const testBtn = page.getByRole('button', { name: 'Test connection' })
+  const testBtn = page.getByRole('button', { name: 'Test LNBits connection' })
   const result = page.getByTestId('connection-result')
 
   // Reachable wallet with an LNURL-p configured.
