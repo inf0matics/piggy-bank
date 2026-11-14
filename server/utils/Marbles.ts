@@ -199,7 +199,7 @@ export const readLastPayment = (conn: MarblesConnection, { fresh = false } = {})
  * address. Null without an active link, without an LNURL (marbles has no
  * public URL set), or when the key lacks the `pay_links` right.
  */
-export const readDeposit = (conn: MarblesConnection): Promise<{ lnurl: string, address: string | null } | null> =>
+export const readDeposit = (conn: MarblesConnection, { fresh = false } = {}): Promise<{ lnurl: string, address: string | null } | null> =>
   cached(walletId(conn, 'pay-links'), PAY_LINKS_TTL_MS, async () => {
     let body: unknown
     try {
@@ -210,12 +210,40 @@ export const readDeposit = (conn: MarblesConnection): Promise<{ lnurl: string, a
     }
     const link = parse(PayLinksAnswer, body).pay_links.find(l => l.active)
     return link?.lnurl ? { lnurl: link.lnurl, address: link.address } : null
-  })
+  }, fresh)
+
+export interface MarblesKey {
+  wallets: Array<{ id: string, name: string }>
+  rights: string[]
+  expiresAt: string | null
+}
 
 /** The calling key: the wallets it reaches, its rights and expiry. Never cached. */
-export const readKey = async (conn: MarblesConnection): Promise<{ wallets: Array<{ id: string, name: string }>, rights: string[], expiresAt: string | null }> => {
+export const readKey = async (conn: MarblesConnection): Promise<MarblesKey> => {
   const key = parse(KeyAnswer, await request(conn, '/key'))
   return { wallets: key.wallets, rights: key.rights, expiresAt: key.expires_at }
+}
+
+// What the piggy bank reads with: the balance and transactions, and the pay links.
+const NEEDED_RIGHTS = ['read', 'pay_links']
+// Rights that can move money out of the wallet, which the piggy bank never needs.
+const RISKY_RIGHTS = ['pay', 'withdraw_links']
+
+/**
+ * Whether `key` can serve the piggy bank's wallet: it must reach the wallet
+ * and have `read` and `pay_links`. Names the rights it has beyond what the
+ * piggy bank needs that can move money.
+ */
+export const checkKeyFor = (key: MarblesKey, wallet: string): { ok: true, walletName: string, riskyRights: string[] } | { ok: false, error: string } => {
+  const reached = key.wallets.find(w => w.id === wallet)
+  if (!reached) {
+    return { ok: false, error: 'The API key does not reach this wallet. Check the wallet id, or add the wallet to the key in marbles.' }
+  }
+  const missing = NEEDED_RIGHTS.filter(right => !key.rights.includes(right))
+  if (missing.length > 0) {
+    return { ok: false, error: `The API key lacks the right${missing.length > 1 ? 's' : ''} ${missing.join(' and ')}. The piggy bank needs read and pay_links.` }
+  }
+  return { ok: true, walletName: reached.name, riskyRights: RISKY_RIGHTS.filter(right => key.rights.includes(right)) }
 }
 
 /**

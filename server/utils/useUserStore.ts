@@ -12,6 +12,7 @@ import {
   type UserRow,
   type UserSchema,
 } from '../domain/user'
+import type { WalletSource } from '../../utils/switchBack'
 
 let dbCache: DatabaseSync | null = null
 
@@ -79,21 +80,29 @@ export const insertUser = (input: UserInput, owner: string): UserSchema => {
   const id = randomUUID()
   getDb()
     .prepare(`
-      INSERT INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key, owner)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, access_key, lnbits_url, lnbits_invoice_key, owner, marbles_url, marbles_key, marbles_wallet)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
-    .run(id, input.name, input.accessKey, input.lnbitsUrl, input.invoiceKey, owner)
+    .run(id, input.name, input.accessKey, input.lnbitsUrl, input.invoiceKey, owner,
+      input.marbles?.url ?? null, input.marbles?.key ?? null, input.marbles?.wallet ?? null)
   return getUserById(id) as UserSchema
 }
 
+/**
+ * Saves the form's fields. Null when the piggy bank is not the owner's, or
+ * when it would drop the marbles settings while reading its balance from them.
+ */
 export const updateOwnedUser = (id: string, owner: string, input: UserInput): UserSchema | null => {
   const result = getDb()
     .prepare(`
       UPDATE users
-      SET name = ?, access_key = ?, lnbits_url = ?, lnbits_invoice_key = ?
-      WHERE id = ? AND owner = ?
+      SET name = ?, access_key = ?, lnbits_url = ?, lnbits_invoice_key = ?,
+          marbles_url = ?, marbles_key = ?, marbles_wallet = ?
+      WHERE id = ? AND owner = ? AND (? IS NOT NULL OR balance_source != 'marbles')
     `)
-    .run(input.name, input.accessKey, input.lnbitsUrl, input.invoiceKey, id, owner)
+    .run(input.name, input.accessKey, input.lnbitsUrl, input.invoiceKey,
+      input.marbles?.url ?? null, input.marbles?.key ?? null, input.marbles?.wallet ?? null,
+      id, owner, input.marbles?.key ?? null)
   if (result.changes === 0) {
     return null
   }
@@ -101,19 +110,20 @@ export const updateOwnedUser = (id: string, owner: string, input: UserInput): Us
 }
 
 /**
- * Freezes an LNBits piggy bank at `sats` and puts it on the manual source, with
- * `lastChange` as its last change (null: none to show). The LNBits URL and key
- * are kept. Null when the piggy bank is not the owner's or not on LNBits.
+ * Freezes a piggy bank read from the wallet `from` at `sats` and puts it on
+ * the manual source, with `lastChange` as its last change (null: none to
+ * show). The wallet settings are kept. Null when the piggy bank is not the
+ * owner's or no longer on `from`.
  */
-export const switchOwnedUserToManual = (id: string, owner: string, sats: number, lastChange: BalanceChange | null): UserSchema | null => {
+export const switchOwnedUserToManual = (id: string, owner: string, from: WalletSource, sats: number, lastChange: BalanceChange | null): UserSchema | null => {
   const result = getDb()
     .prepare(`
       UPDATE users
       SET balance_source = 'manual', manual_sats = ?, manual_changed_at = ?,
           manual_change_sats = ?, manual_change_comment = ?
-      WHERE id = ? AND owner = ? AND balance_source = 'lnbits'
+      WHERE id = ? AND owner = ? AND balance_source = ?
     `)
-    .run(sats, lastChange?.time ?? null, lastChange?.sats ?? null, lastChange?.comment ?? null, id, owner)
+    .run(sats, lastChange?.time ?? null, lastChange?.sats ?? null, lastChange?.comment ?? null, id, owner, from)
   return result.changes === 0 ? null : getUserById(id)
 }
 
@@ -133,20 +143,23 @@ export const changeOwnedManualBalance = (id: string, owner: string, sats: number
 }
 
 /**
- * Puts a manual piggy bank back on LNBits, provided its manual balance is still
- * `manualSats` (the one the custodian compared). The manual balance and last
- * change are dropped: LNBits is the balance again. Null when the piggy bank is
- * not the owner's, not manual, or its manual balance changed.
+ * Puts a manual piggy bank on the wallet `to` (LNBits, or marbles when its
+ * settings are saved), provided its manual balance is still `manualSats` (the
+ * one the custodian compared). The manual balance and last change are dropped:
+ * the wallet is the balance again. Null when the piggy bank is not the
+ * owner's, not manual, its manual balance changed, or it has no marbles
+ * settings to switch to.
  */
-export const switchOwnedUserToLnbits = (id: string, owner: string, manualSats: number): UserSchema | null => {
+export const switchOwnedUserToWallet = (id: string, owner: string, to: WalletSource, manualSats: number): UserSchema | null => {
   const result = getDb()
     .prepare(`
       UPDATE users
-      SET balance_source = 'lnbits', manual_sats = NULL, manual_changed_at = NULL,
+      SET balance_source = ?, manual_sats = NULL, manual_changed_at = NULL,
           manual_change_sats = NULL, manual_change_comment = NULL
       WHERE id = ? AND owner = ? AND balance_source = 'manual' AND manual_sats = ?
+        AND (? = 'lnbits' OR marbles_key IS NOT NULL)
     `)
-    .run(id, owner, manualSats)
+    .run(to, id, owner, manualSats, to)
   return result.changes === 0 ? null : getUserById(id)
 }
 

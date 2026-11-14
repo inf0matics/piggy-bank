@@ -1,9 +1,11 @@
-import { lnbitsPaymentToChange, ManualSwitchInputSchema, type BalanceChange } from '~/server/domain/user'
+import { lnbitsPaymentToChange, ManualSwitchInputSchema, type BalanceChange, type UserSchema } from '~/server/domain/user'
 import LnBits from '~/server/utils/LnBits'
+import { readLastPayment } from '~/server/utils/Marbles'
+import type { WalletSource } from '~/utils/switchBack'
 
-// Switches an LNBits piggy bank to the manual source, frozen at the starting
-// balance the custodian confirmed (the LNBits balance he was shown, or one he
-// entered while LNBits was unreachable).
+// Switches a piggy bank read from LNBits or marbles to the manual source,
+// frozen at the starting balance the custodian confirmed (the wallet balance
+// they were shown, or one they entered while the wallet could not give it).
 export default defineEventHandler(async (event) => {
   const admin = requireAdmin(event)
 
@@ -21,10 +23,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
   }
 
+  const from = user.balance.source
   const { sats } = parsed.data
-  const updated = switchOwnedUserToManual(id, admin.sub, sats, await freezeLastChange(user.lnbits, sats))
+  const updated = switchOwnedUserToManual(id, admin.sub, from, sats, await freezeLastChange(user, from, sats))
   if (!updated) {
-    // Deleted or switched by a concurrent request while LNBits was being asked.
+    // Deleted or switched by a concurrent request while the wallet was being asked.
     throw getOwnedUser(id, admin.sub)
       ? createError({ statusCode: 409, statusMessage: 'Piggy bank already has a manual balance' })
       : createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
@@ -32,13 +35,17 @@ export default defineEventHandler(async (event) => {
   return updated
 })
 
-// The last change the frozen piggy bank starts with. While LNBits answers, its
-// last payment carries over, so the child's dashboard shows no trace of the
-// freeze (none when the wallet has no payments). Otherwise the freeze itself is
-// the first change.
-const freezeLastChange = async (lnbits: { url: string, invoiceKey: string }, sats: number): Promise<BalanceChange | null> => {
+// The last change the frozen piggy bank starts with. While the wallet answers,
+// its last payment carries over, so the child's dashboard shows no trace of
+// the freeze (none when the wallet has no payments). Otherwise the freeze
+// itself is the first change.
+const freezeLastChange = async (user: UserSchema, from: WalletSource, sats: number): Promise<BalanceChange | null> => {
   try {
-    const last = await new LnBits({ apiKey: lnbits.invoiceKey, url: lnbits.url }).getLastPayment()
+    if (from === 'marbles') {
+      if (!user.marbles) throw new Error('no marbles settings')
+      return await readLastPayment(user.marbles, { fresh: true })
+    }
+    const last = await new LnBits({ apiKey: user.lnbits.invoiceKey, url: user.lnbits.url }).getLastPayment()
     return last ? lnbitsPaymentToChange(last) : null
   } catch {
     return { time: Math.floor(Date.now() / 1000), sats, comment: null }

@@ -1,6 +1,9 @@
-import { DEFAULT_LNBITS_URL_KEY } from '~/server/domain/settings'
+import { DEFAULT_LNBITS_URL_KEY, DEFAULT_MARBLES_URL_KEY } from '~/server/domain/settings'
 
 export default defineEventHandler((event) => {
   const admin = requireAdmin(event)
-  return { defaultLnbitsUrl: getSetting(`${DEFAULT_LNBITS_URL_KEY}:${admin.sub}`) ?? '' }
+  return {
+    defaultLnbitsUrl: getSetting(`${DEFAULT_LNBITS_URL_KEY}:${admin.sub}`) ?? '',
+    defaultMarblesUrl: getSetting(`${DEFAULT_MARBLES_URL_KEY}:${admin.sub}`) ?? '',
+  }
 })

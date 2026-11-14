@@ -26,7 +26,7 @@ describe('UserInputSchema', () => {
       lnbitsUrl: ' https://legend.lnbits.com ',
       invoiceKey: ' inv-key ',
     })
-    assert.deepEqual(result, validInput)
+    assert.deepEqual(result, { ...validInput, marbles: null })
   })
 
   it('accepts the URL forms admins use (plain host, port, path)', () => {

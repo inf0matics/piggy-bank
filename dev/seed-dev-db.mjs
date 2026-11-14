@@ -30,7 +30,10 @@ db.exec(`
     manual_sats INTEGER,
     manual_changed_at INTEGER,
     manual_change_sats INTEGER,
-    manual_change_comment TEXT
+    manual_change_comment TEXT,
+    marbles_url TEXT,
+    marbles_key TEXT,
+    marbles_wallet TEXT
   )
 `)
 

@@ -2,10 +2,11 @@ import z from 'zod'
 import { lnbitsPaymentToChange, type UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
+import { MarblesError, readDeposit, readLastPayment, readWallet, type MarblesConnection } from '~/server/utils/Marbles'
 import { satsToEur } from '~/utils/manualBalanceChange'
 
-// `available: false` — LNBits cannot be reached right now. Not an error: the
-// dashboard says so and keeps polling until LNBits is back.
+// `available: false` — the wallet (LNBits or marbles) cannot be reached right
+// now. Not an error: the dashboard says so and keeps polling until it is back.
 // `rate` and `eur` are null when no current BTC/EUR rate is available.
 export const DashboardDto = z.discriminatedUnion('available', [z.object({
   available: z.literal(true),
@@ -47,11 +48,18 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     })
   }
 
+  const unavailable = () => DashboardDto.parse({ available: false, name: user.name })
+
+  if (user.balance.source === 'marbles') {
+    if (!user.marbles) throw marblesFailed()
+    const balance = await readMarblesBalance(user.marbles)
+    return balance ? available(user.name, balance) : unavailable()
+  }
+
   const lnbits = new LnBits({
     apiKey: user.lnbits.invoiceKey,
     url: user.lnbits.url,
   })
-  const unavailable = () => DashboardDto.parse({ available: false, name: user.name })
 
   let lnbitsBalance: number
   try {
@@ -94,3 +102,28 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
     payment: lastLnbitsPayment ? lnbitsPaymentToChange(lastLnbitsPayment) : null,
   })
 })
+
+const marblesFailed = () => createError({
+  statusCode: 500,
+  statusMessage: 'Error fetching the marbles balance. Please check the marbles settings!',
+})
+
+// The balance, last payment and deposit link from marbles (cached reads), or
+// null while marbles is unreachable. A refused or expired key and a malformed
+// answer are errors, like a refused LNBits invoice key. A failing pay-link
+// read only means no deposit option.
+const readMarblesBalance = async (marbles: MarblesConnection): Promise<DashboardBalance | null> => {
+  const [wallet, last, deposit] = await Promise.allSettled([readWallet(marbles), readLastPayment(marbles), readDeposit(marbles)])
+  if (wallet.status === 'rejected' || last.status === 'rejected') {
+    const reasons = [wallet, last].flatMap(read => read.status === 'rejected' ? [read.reason] : [])
+    if (reasons.some(reason => reason instanceof MarblesError && reason.reason === 'unreachable')) return null
+    throw marblesFailed()
+  }
+  const link = deposit.status === 'fulfilled' ? deposit.value : null
+  return {
+    sats: wallet.value.sats,
+    lnurl: link?.lnurl ?? null,
+    address: link?.address ?? null,
+    payment: last.value,
+  }
+}

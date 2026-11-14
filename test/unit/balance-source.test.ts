@@ -76,6 +76,9 @@ describe('rowToUser', () => {
     manual_changed_at: null,
     manual_change_sats: null,
     manual_change_comment: null,
+    marbles_url: null,
+    marbles_key: null,
+    marbles_wallet: null,
   }
 
   it('maps a manual piggy bank with its balance and last change', () => {

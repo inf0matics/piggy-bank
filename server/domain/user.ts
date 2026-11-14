@@ -7,6 +7,14 @@ const LnBitsSchema = z.object({
   invoiceKey: z.string(),
 })
 
+// A piggy bank's marbles connection (spec admin-13): the instance's URL (the
+// app calls <url>/api/v1/…), an API key and the wallet id.
+const MarblesSchema = z.object({
+  url: z.string(),
+  key: z.string(),
+  wallet: z.string(),
+})
+
 const BalanceChangeSchema = z.object({
   time: z.number(), // unix seconds
   sats: z.number().int(),
@@ -15,13 +23,14 @@ const BalanceChangeSchema = z.object({
 
 export type BalanceChange = z.infer<typeof BalanceChangeSchema>
 
-// Where a piggy bank's balance comes from. `lnbits`: read live from the wallet.
-// `manual`: a single sats balance the custodian manages in the admin; the app
-// remembers only its last change (shown as "Last payment"), no history. Null
-// when frozen from a wallet without payments. The LNBits URL and key are kept
-// either way.
+// Where a piggy bank's balance comes from. `lnbits` / `marbles`: read live
+// from that wallet. `manual`: a single sats balance the custodian manages in
+// the admin; the app remembers only its last change (shown as "Last payment"),
+// no history. Null when frozen from a wallet without payments. The LNBits and
+// marbles settings are kept either way.
 const BalanceSchema = z.discriminatedUnion('source', [
   z.object({ source: z.literal('lnbits') }),
+  z.object({ source: z.literal('marbles') }),
   z.object({
     source: z.literal('manual'),
     sats: z.number().int().nonnegative(),
@@ -43,6 +52,7 @@ export const UserSchema = z.object({
   name: z.string(),
   accessKey: z.string(),
   lnbits: LnBitsSchema,
+  marbles: MarblesSchema.nullable(),
   balance: BalanceSchema,
 })
 
@@ -56,11 +66,54 @@ const requiredString = (error: string) => z.string({ error }).trim().min(1, { er
 
 const lnbitsUrlError = 'A valid LNBits URL is required'
 
+const marblesUrlError = 'A valid marbles URL is required'
+const marblesKeyError = 'The marbles API key is mbl_ followed by 43 characters'
+const marblesWalletError = 'The marbles wallet id is 16 characters'
+
+// An http(s) URL the app can append /api/v1/… to: no credentials, query or
+// fragment; stored without a trailing slash.
+const marblesUrl = z.string({ error: marblesUrlError }).trim().transform((value, ctx) => {
+  let url: URL | null = null
+  try {
+    url = new URL(value)
+  } catch {
+    // reported below
+  }
+  if (!url || !['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+    ctx.addIssue({ code: 'custom', message: marblesUrlError })
+    return z.NEVER
+  }
+  return `${url.origin}${url.pathname}`.replace(/\/+$/, '')
+})
+
+// The marbles settings of a piggy bank, as a connection. The key and wallet
+// patterns are marbles' own: they go into a header and a URL path.
+export const MarblesSettingsSchema = z.object({
+  marblesUrl,
+  marblesKey: z.string({ error: marblesKeyError }).trim().regex(/^mbl_[\w-]{43}$/, { error: marblesKeyError }),
+  marblesWallet: z.string({ error: marblesWalletError }).trim().regex(/^[\w-]{16}$/, { error: marblesWalletError }),
+}).transform(({ marblesUrl, marblesKey, marblesWallet }) => ({ url: marblesUrl, key: marblesKey, wallet: marblesWallet }))
+
+const optionalText = z.string().trim().nullish().transform(value => value ?? '')
+
+// The marbles settings are optional: without a key and a wallet the piggy bank
+// has no marbles connection (a pre-filled default URL alone is none).
 export const UserInputSchema = z.object({
   name: requiredString('Name is required'),
   accessKey: requiredString('PIN is required'),
   lnbitsUrl: z.string({ error: lnbitsUrlError }).trim().pipe(z.url({ error: lnbitsUrlError })),
   invoiceKey: requiredString('Invoice key is required'),
+  marblesUrl: optionalText,
+  marblesKey: optionalText,
+  marblesWallet: optionalText,
+}).transform(({ marblesUrl, marblesKey, marblesWallet, ...input }, ctx) => {
+  if (!marblesKey && !marblesWallet) return { ...input, marbles: null }
+  const marbles = MarblesSettingsSchema.safeParse({ marblesUrl, marblesKey, marblesWallet })
+  if (!marbles.success) {
+    for (const issue of marbles.error.issues) ctx.addIssue({ code: 'custom', message: issue.message, path: issue.path })
+    return z.NEVER
+  }
+  return { ...input, marbles: marbles.data }
 })
 
 export type UserInput = z.infer<typeof UserInputSchema>
@@ -78,6 +131,12 @@ export const ManualSwitchInputSchema = z.object({
 export const SwitchBackInputSchema = z.object({
   manualSats: wholeSats('The manual balance must be a whole number of sats'),
   lnbitsSats: wholeSats('The LNBits balance must be a whole number of sats'),
+})
+
+// Body of the switch to marbles, like the switch back to LNBits.
+export const MarblesSwitchInputSchema = z.object({
+  manualSats: wholeSats('The manual balance must be a whole number of sats'),
+  marblesSats: wholeSats('The marbles balance must be a whole number of sats'),
 })
 
 // Body of a manual balance change, converted from EUR by the admin view at the
@@ -110,7 +169,10 @@ export const CREATE_USERS_TABLE = `
     manual_sats INTEGER,
     manual_changed_at INTEGER,
     manual_change_sats INTEGER,
-    manual_change_comment TEXT
+    manual_change_comment TEXT,
+    marbles_url TEXT,
+    marbles_key TEXT,
+    marbles_wallet TEXT
   )
 `
 
@@ -123,6 +185,9 @@ const ADDED_USER_COLUMNS: Record<string, string> = {
   manual_changed_at: 'INTEGER',
   manual_change_sats: 'INTEGER',
   manual_change_comment: 'TEXT',
+  marbles_url: 'TEXT',
+  marbles_key: 'TEXT',
+  marbles_wallet: 'TEXT',
 }
 
 /** Brings an existing users table up to the current schema (idempotent). */
@@ -153,6 +218,9 @@ export interface UserRow {
   manual_changed_at: number | null
   manual_change_sats: number | null
   manual_change_comment: string | null
+  marbles_url: string | null
+  marbles_key: string | null
+  marbles_wallet: string | null
 }
 
 const rowToBalance = (row: UserRow): Balance => BalanceSchema.parse(row.balance_source === 'manual'
@@ -177,5 +245,8 @@ export const rowToUser = (row: UserRow): UserSchema => ({
     url: row.lnbits_url,
     invoiceKey: row.lnbits_invoice_key,
   },
+  marbles: row.marbles_url && row.marbles_key && row.marbles_wallet
+    ? { url: row.marbles_url, key: row.marbles_key, wallet: row.marbles_wallet }
+    : null,
   balance: rowToBalance(row),
 })
