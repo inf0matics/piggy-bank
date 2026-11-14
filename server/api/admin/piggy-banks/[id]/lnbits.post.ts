@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Piggy bank is already on LNBits' })
   }
 
-  const refused = checkSwitchBack({ manualSats: user.balance.sats, wallet: await readWalletSats(user.lnbits) }, parsed.data)
+  const { manualSats, lnbitsSats } = parsed.data
+  const refused = checkSwitchBack('lnbits', { manualSats: user.balance.sats, wallet: await readWalletSats(user.lnbits) }, { manualSats, walletSats: lnbitsSats })
   if (refused) {
     throw createError({ statusCode: refused.statusCode, statusMessage: refused.message })
   }

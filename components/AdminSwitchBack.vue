@@ -29,7 +29,7 @@
           data-testid="switch-back-refused"
           class="text-sm text-error"
         >
-          {{ WALLET_UNREADABLE[wallet.reason] }}
+          {{ WALLET_UNREADABLE.lnbits[wallet.reason] }}
         </p>
         <p
           v-else-if="wallet.sats === sats"

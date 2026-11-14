@@ -1,5 +1,6 @@
-// A manual piggy bank goes back on LNBits once the custodian has compared the
-// manual balance with the wallet's (spec admin-12).
+// A manual piggy bank goes back on LNBits (spec admin-12) or onto marbles
+// (spec admin-13) once the custodian has compared the manual balance with the
+// wallet's.
 import assert from 'node:assert/strict'
 import { afterEach, describe, it } from 'node:test'
 import { SwitchBackInputSchema } from '../../server/domain/user.ts'
@@ -46,30 +47,45 @@ describe('readWalletSats', () => {
 })
 
 describe('checkSwitchBack', () => {
-  const confirmed = { manualSats: 100_000, lnbitsSats: 150_000 }
+  const confirmed = { manualSats: 100_000, walletSats: 150_000 }
 
   it('allows the switch the custodian confirmed, equal or not', () => {
-    assert.equal(checkSwitchBack({ manualSats: 100_000, wallet: { sats: 150_000 } }, confirmed), null)
-    assert.equal(checkSwitchBack({ manualSats: 5, wallet: { sats: 5 } }, { manualSats: 5, lnbitsSats: 5 }), null)
+    assert.equal(checkSwitchBack('lnbits', { manualSats: 100_000, wallet: { sats: 150_000 } }, confirmed), null)
+    assert.equal(checkSwitchBack('marbles', { manualSats: 5, wallet: { sats: 5 } }, { manualSats: 5, walletSats: 5 }), null)
   })
 
   it('refuses while LNBits cannot give its balance, and says why', () => {
-    assert.deepEqual(checkSwitchBack({ manualSats: 100_000, wallet: { sats: null, reason: 'unreachable' } }, confirmed), {
+    assert.deepEqual(checkSwitchBack('lnbits', { manualSats: 100_000, wallet: { sats: null, reason: 'unreachable' } }, confirmed), {
       statusCode: 503,
-      message: WALLET_UNREADABLE.unreachable,
+      message: WALLET_UNREADABLE.lnbits.unreachable,
     })
-    assert.deepEqual(checkSwitchBack({ manualSats: 100_000, wallet: { sats: null, reason: 'refused' } }, confirmed), {
+    assert.deepEqual(checkSwitchBack('lnbits', { manualSats: 100_000, wallet: { sats: null, reason: 'refused' } }, confirmed), {
       statusCode: 502,
-      message: WALLET_UNREADABLE.refused,
+      message: WALLET_UNREADABLE.lnbits.refused,
     })
   })
 
+  it('refuses while marbles cannot give its balance, with its own message for an expired key', () => {
+    assert.deepEqual(checkSwitchBack('marbles', { manualSats: 100_000, wallet: { sats: null, reason: 'unreachable' } }, confirmed), {
+      statusCode: 503,
+      message: 'marbles cannot be reached, so the piggy bank stays manual. Try again later.',
+    })
+    assert.equal(checkSwitchBack('marbles', { manualSats: 100_000, wallet: { sats: null, reason: 'refused' } }, confirmed)?.statusCode, 502)
+    const expired = checkSwitchBack('marbles', { manualSats: 100_000, wallet: { sats: null, reason: 'expired' } }, confirmed)
+    assert.equal(expired?.statusCode, 502)
+    assert.match(expired?.message ?? '', /^The marbles API key has expired/)
+  })
+
   it('refuses when the balances are not the ones the custodian compared', () => {
-    assert.deepEqual(checkSwitchBack({ manualSats: 100_000, wallet: { sats: 160_000 } }, confirmed), {
+    assert.deepEqual(checkSwitchBack('lnbits', { manualSats: 100_000, wallet: { sats: 160_000 } }, confirmed), {
       statusCode: 409,
       message: 'The LNBits balance is now 160,000 sats. Compare the balances again.',
     })
-    assert.deepEqual(checkSwitchBack({ manualSats: 90_000, wallet: { sats: 150_000 } }, confirmed), {
+    assert.deepEqual(checkSwitchBack('marbles', { manualSats: 100_000, wallet: { sats: 160_000 } }, confirmed), {
+      statusCode: 409,
+      message: 'The marbles balance is now 160,000 sats. Compare the balances again.',
+    })
+    assert.deepEqual(checkSwitchBack('lnbits', { manualSats: 90_000, wallet: { sats: 150_000 } }, confirmed), {
       statusCode: 409,
       message: 'The manual balance has changed. Compare the balances again.',
     })
