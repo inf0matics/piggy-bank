@@ -24,10 +24,10 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "^1.2.43",
+    "@iconify-json/tabler": "^1.2.45",
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/eslint-config": "^1.17.0",
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@thespielplatz/tsp-tools-theme": "^0.4.2",
     "@types/node": "^26.6.6",
     "@types/qrcode-svg": "^1.1.5",
