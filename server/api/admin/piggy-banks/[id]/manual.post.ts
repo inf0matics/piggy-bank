@@ -1,6 +1,6 @@
 import { lnbitsPaymentToChange, ManualSwitchInputSchema, type BalanceChange, type UserSchema } from '~/server/domain/user'
 import LnBits from '~/server/utils/LnBits'
-import { readLastPayment } from '~/server/utils/Marbles'
+import { readBalance } from '~/server/utils/Marbles'
 import type { WalletSource } from '~/utils/switchBack'
 
 // Switches a piggy bank read from LNBits or marbles to the manual source,
@@ -43,7 +43,7 @@ const freezeLastChange = async (user: UserSchema, from: WalletSource, sats: numb
   const freeze = { time: Math.floor(Date.now() / 1000), sats, comment: null }
   try {
     if (from === 'marbles') {
-      return user.marbles ? await readLastPayment(user.marbles, { fresh: true }) : freeze
+      return user.marbles ? (await readBalance(user.marbles, { fresh: true })).lastPayment : freeze
     }
     const last = await new LnBits({ apiKey: user.lnbits.invoiceKey, url: user.lnbits.url }).getLastPayment()
     return last ? lnbitsPaymentToChange(last) : null

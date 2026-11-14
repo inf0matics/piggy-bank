@@ -2,7 +2,7 @@ import z from 'zod'
 import { lnbitsPaymentToChange, type UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
-import { isUnreachable, readDeposit, readLastPayment, readWallet, type MarblesConnection } from '~/server/utils/Marbles'
+import { isUnreachable, readBalance, readDeposit, type MarblesConnection } from '~/server/utils/Marbles'
 import { satsToEur } from '~/utils/manualBalanceChange'
 
 // `available: false` — the wallet (LNBits or marbles) cannot be reached right
@@ -113,16 +113,16 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
 // answer are errors, like a refused LNBits invoice key. A failing pay-link
 // read only means no deposit option.
 const readMarblesBalance = async (marbles: MarblesConnection): Promise<DashboardBalance | null> => {
-  const [wallet, last, deposit] = await Promise.allSettled([readWallet(marbles), readLastPayment(marbles), readDeposit(marbles)])
-  if (wallet.status === 'rejected' || last.status === 'rejected') {
-    if ([wallet, last].some(read => read.status === 'rejected' && isUnreachable(read.reason))) return null
+  const [balance, deposit] = await Promise.allSettled([readBalance(marbles), readDeposit(marbles)])
+  if (balance.status === 'rejected') {
+    if (isUnreachable(balance.reason)) return null
     throw marblesFailed()
   }
   const link = deposit.status === 'fulfilled' ? deposit.value : null
   return {
-    sats: wallet.value.sats,
+    sats: balance.value.sats,
     lnurl: link?.lnurl ?? null,
     address: link?.address ?? null,
-    payment: last.value,
+    payment: balance.value.lastPayment,
   }
 }

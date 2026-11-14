@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { deleteByName, loginAsAdmin, type PiggyBank } from './helpers/admin'
 import { login } from './helpers/login'
-import { MARBLES_URL, MARBLES_WALLET, marblesKey, marblesRequests, resetMarbles, setMarbles } from './helpers/marblesMock'
+import { MARBLES_URL, MARBLES_WALLET, marblesKey, marblesPayment, marblesRequests, resetMarbles, setMarbles } from './helpers/marblesMock'
 import { resetMock } from './helpers/mockControl'
 
 // marbles as a balance source (spec admin-13). Each test makes its own piggy
@@ -170,6 +170,47 @@ test('marbles → manual freezes the marbles balance; the dashboard then needs n
     await expect(child.getByText('Balance currently unavailable')).toHaveCount(0)
   } finally {
     await deleteByName(page, 'Marbles freeze')
+  }
+})
+
+test('marbles → manual while marbles is down: the custodian enters the starting balance', async ({ page }) => {
+  const pb = await onMarbles(page, 'Marbles enter', '6460', marblesKey('enter'))
+  await setMarbles({ reachable: false })
+
+  try {
+    await page.goto(`/admin/piggy-banks/${pb.id}/edit`)
+    await card(page).getByRole('button', { name: 'Switch to manual' }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByText('The balance cannot be read from marbles right now.')).toBeVisible({ timeout: 10_000 })
+    await dialog.locator('#startingSats').fill('77000')
+    await dialog.getByRole('button', { name: 'Switch to manual' }).click()
+    await expect(card(page).getByTestId('manual-balance')).toHaveText('77,000 sats')
+
+    const child = await page.context().newPage()
+    await login(child, '6460')
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00077000 BTC', BALANCE_TIMEOUT)
+    await expect(child.getByRole('button', { name: 'Deposit' })).toHaveCount(0)
+  } finally {
+    await deleteByName(page, 'Marbles enter')
+  }
+})
+
+test('a payment into the marbles wallet is announced on the dashboard', async ({ page }) => {
+  await onMarbles(page, 'Marbles toast', '6461', marblesKey('toast'))
+
+  try {
+    const child = await page.context().newPage()
+    await login(child, '6461')
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00100000 BTC', BALANCE_TIMEOUT)
+    // The admin list reads the same wallet; it must not put the cached balance
+    // and last payment out of step.
+    await page.goto('/admin/piggy-banks')
+
+    await marblesPayment(2_100, 'Pocket money')
+    await expect(child.getByText('+2100 sats').first()).toBeVisible(BALANCE_TIMEOUT)
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00102100 BTC', BALANCE_TIMEOUT)
+  } finally {
+    await deleteByName(page, 'Marbles toast')
   }
 })
 

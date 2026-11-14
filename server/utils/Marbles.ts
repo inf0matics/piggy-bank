@@ -42,6 +42,9 @@ const TIMEOUT_MS = 3_000
 const BALANCE_TTL_MS = 5_000
 // Pay links rarely change.
 const PAY_LINKS_TTL_MS = 60_000
+// A failed read is kept only this long, so a recovered marbles shows
+// everything again soon (pay links included).
+const FAILURE_TTL_MS = BALANCE_TTL_MS
 // How long a key waits after a 429 without a readable Retry-After.
 const DEFAULT_RETRY_AFTER_MS = 60_000
 
@@ -145,9 +148,10 @@ const parse = <T>(schema: z.ZodType<T>, body: unknown): T => {
 const cache = new Map<string, { expires: number, value: Promise<unknown> }>()
 
 /**
- * The cached read under `id`, or a new one kept for `ttlMs` (failures too, so
- * a dead marbles is not asked on every poll). `fresh` always asks marbles and
- * caches that answer.
+ * The cached read under `id`, or a new one kept for `ttlMs`. A failure is kept
+ * for at most FAILURE_TTL_MS, so a dead marbles is not asked on every poll but
+ * a recovered one is read again soon. `fresh` always asks marbles and caches
+ * that answer.
  */
 const cached = <T>(id: string, ttlMs: number, read: () => Promise<T>, fresh = false): Promise<T> => {
   const now = Date.now()
@@ -157,7 +161,11 @@ const cached = <T>(id: string, ttlMs: number, read: () => Promise<T>, fresh = fa
     if (entry.expires <= now) cache.delete(key)
   }
   const value = read()
-  cache.set(id, { expires: now + ttlMs, value })
+  const entry = { expires: now + ttlMs, value }
+  cache.set(id, entry)
+  value.catch(() => {
+    entry.expires = Math.min(entry.expires, Date.now() + FAILURE_TTL_MS)
+  })
   return value
 }
 
@@ -172,30 +180,39 @@ export const resetMarblesCache = (): void => {
 
 // --- Reads ---
 
-/** The wallet's name and balance in whole sats (rounded down). */
-export const readWallet = (conn: MarblesConnection, { fresh = false } = {}): Promise<{ name: string, sats: number }> =>
-  cached(walletId(conn, 'wallet'), BALANCE_TTL_MS, async () => {
-    const wallet = parse(WalletAnswer, await request(conn, walletPath(conn)))
-    return { name: wallet.name, sats: msatToSats(wallet.balance_msat) }
-  }, fresh)
+export interface MarblesBalance {
+  name: string
+  sats: number
+  lastPayment: BalanceChange | null
+}
 
 /**
- * The newest settled transaction, as marbles orders them, as a change in whole
- * sats (negative out of the wallet); null when there is none. Operator
+ * The wallet's name, balance in whole sats (rounded down) and last payment:
+ * the newest settled transaction, as marbles orders them, as a change in whole
+ * sats (negative out of the wallet), null when there is none. Operator
  * adjustments count like any other payment.
+ *
+ * One read, cached as one: the balance and the last payment always come from
+ * the same moment, so the dashboard never sees a balance rise without the
+ * payment behind it (that would swallow its toast). The balance is asked
+ * first, so the transactions include every payment the balance does.
  */
-export const readLastPayment = (conn: MarblesConnection, { fresh = false } = {}): Promise<BalanceChange | null> =>
-  cached(walletId(conn, 'last-payment'), BALANCE_TTL_MS, async () => {
+export const readBalance = (conn: MarblesConnection, { fresh = false } = {}): Promise<MarblesBalance> =>
+  cached(walletId(conn, 'balance'), BALANCE_TTL_MS, async () => {
+    const wallet = parse(WalletAnswer, await request(conn, walletPath(conn)))
     const { transactions } = parse(TransactionsAnswer, await request(conn, `${walletPath(conn)}/transactions?limit=1&status=settled`))
-    const last = transactions[0]
-    if (!last) return null
-    const sats = msatToSats(last.amount_paid_msat ?? last.amount_msat)
-    return {
-      time: Math.floor(Date.parse(last.settled_at) / 1000),
-      sats: last.direction === 'out' ? -sats : sats,
-      comment: last.lnurl_params?.comment || last.description || null,
-    }
+    return { name: wallet.name, sats: msatToSats(wallet.balance_msat), lastPayment: toChange(transactions[0]) }
   }, fresh)
+
+const toChange = (last: z.infer<typeof TransactionsAnswer>['transactions'][number] | undefined): BalanceChange | null => {
+  if (!last) return null
+  const sats = msatToSats(last.amount_paid_msat ?? last.amount_msat)
+  return {
+    time: Math.floor(Date.parse(last.settled_at) / 1000),
+    sats: last.direction === 'out' ? -sats : sats,
+    comment: last.lnurl_params?.comment || last.description || null,
+  }
+}
 
 /**
  * The deposit option: the newest active pay link's LNURL and Lightning
@@ -256,7 +273,7 @@ export const checkKeyFor = (key: MarblesKey, wallet: string): { ok: true, wallet
  */
 export const readMarblesWalletSats = async (conn: MarblesConnection): Promise<WalletRead> => {
   try {
-    return { sats: (await readWallet(conn, { fresh: true })).sats }
+    return { sats: (await readBalance(conn, { fresh: true })).sats }
   } catch (error) {
     const reason = error instanceof MarblesError ? error.reason : 'refused'
     return { sats: null, reason: reason === 'unreachable' || reason === 'expired' ? reason : 'refused' }

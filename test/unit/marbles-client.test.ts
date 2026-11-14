@@ -5,11 +5,10 @@ import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 import {
   MarblesError,
+  readBalance,
   readDeposit,
   readKey,
-  readLastPayment,
   readMarblesWalletSats,
-  readWallet,
   resetMarblesCache,
 } from '../../server/utils/Marbles.ts'
 
@@ -75,20 +74,32 @@ afterEach(() => {
   globalThis.fetch = realFetch
 })
 
+// A balance read asks the wallet, then its last settled transaction.
+const txs = (...transactions: unknown[]) => json(200, { transactions, next_cursor: null })
+const balance = (balance_msat: unknown = '1000', ...transactions: unknown[]) => [json(200, wallet(balance_msat)), txs(...transactions)]
+
 describe('marbles requests', () => {
   it('calls <URL>/api/v1 with the key as a bearer token', async () => {
-    answer(json(200, wallet('0')))
-    await readWallet(conn)
+    answer(...balance('0'))
+    await readBalance(conn)
     assert.equal(calls[0]!.url, `https://marbles.test/api/v1/wallets/${conn.wallet}`)
     assert.equal(new Headers(calls[0]!.init?.headers).get('authorization'), `Bearer ${KEY}`)
   })
 
+  it('does not follow redirects, so the key never travels to another host', async () => {
+    answer(() => new Response(null, { status: 302, headers: { Location: 'https://elsewhere.test/' } }))
+    await rejectsWith(readBalance(conn), 'unreachable')
+    assert.equal(calls[0]!.init?.redirect, 'manual')
+    assert.equal(calls.length, 1)
+  })
+
   it('sends only documented query parameters', async () => {
-    answer(json(200, { transactions: [], next_cursor: null }), json(200, { pay_links: [] }), json(200, { wallets: [], rights: [], expires_at: null }))
-    await readLastPayment(conn)
+    answer(...balance(), json(200, { pay_links: [] }), json(200, { wallets: [], rights: [], expires_at: null }))
+    await readBalance(conn)
     await readDeposit(conn)
     await readKey(conn)
     assert.deepEqual(calls.map(c => c.url), [
+      `https://marbles.test/api/v1/wallets/${conn.wallet}`,
       `https://marbles.test/api/v1/wallets/${conn.wallet}/transactions?limit=1&status=settled`,
       `https://marbles.test/api/v1/wallets/${conn.wallet}/pay-links`,
       'https://marbles.test/api/v1/key',
@@ -96,31 +107,38 @@ describe('marbles requests', () => {
   })
 })
 
-describe('readWallet', () => {
+describe('readBalance: the balance', () => {
   it('reads the balance in whole sats, rounded down, and the wallet name', async () => {
-    answer(json(200, wallet('150000999')))
-    assert.deepEqual(await readWallet(conn), { name: 'Anna', sats: 150_000 })
+    answer(...balance('150000999'))
+    const read = await readBalance(conn)
+    assert.deepEqual({ name: read.name, sats: read.sats }, { name: 'Anna', sats: 150_000 })
   })
 
   it('reads balances beyond the float-safe msat range exactly', async () => {
-    answer(json(200, wallet('2100000000000000000')))
-    assert.equal((await readWallet(conn)).sats, 2_100_000_000_000_000)
+    answer(...balance('2100000000000000000'))
+    assert.equal((await readBalance(conn)).sats, 2_100_000_000_000_000)
   })
 
   it('refuses a balance that is not an msat integer string as malformed', async () => {
-    for (const balance of [150_000, '21.0', '2.1e1', '-1', '', ' 1', null, '01']) {
+    for (const msat of [150_000, '21.0', '2.1e1', '-1', '', ' 1', null, '01']) {
       resetMarblesCache()
-      answer(json(200, wallet(balance)))
-      await rejectsWith(readWallet(conn), 'malformed')
+      answer(...balance(msat))
+      await rejectsWith(readBalance(conn), 'malformed')
     }
+  })
+
+  it('asks the balance before the transactions, so these include every payment it does', async () => {
+    answer(...balance())
+    await readBalance(conn)
+    assert.deepEqual(calls.map(c => new URL(c.url).pathname.split('/').at(-1)), [conn.wallet, 'transactions'])
   })
 })
 
-describe('readLastPayment', () => {
+describe('readBalance: the last payment', () => {
   const last = async (fields: Record<string, unknown>) => {
     resetMarblesCache()
-    answer(json(200, { transactions: [transaction(fields)], next_cursor: 'c' }))
-    return readLastPayment(conn)
+    answer(...balance('1000', transaction(fields)))
+    return (await readBalance(conn)).lastPayment
   }
 
   it('takes the paid amount, the payer comment and the settle time', async () => {
@@ -151,15 +169,15 @@ describe('readLastPayment', () => {
   })
 
   it('is null for a wallet without settled transactions', async () => {
-    answer(json(200, { transactions: [], next_cursor: null }))
-    assert.equal(await readLastPayment(conn), null)
+    answer(...balance())
+    assert.equal((await readBalance(conn)).lastPayment, null)
   })
 
   it('refuses malformed amounts and times', async () => {
     for (const fields of [{ amount_paid_msat: 2100 }, { amount_msat: '1.5', amount_paid_msat: null }, { settled_at: null }, { settled_at: 'yesterday' }]) {
       resetMarblesCache()
-      answer(json(200, { transactions: [transaction(fields)], next_cursor: null }))
-      await rejectsWith(readLastPayment(conn), 'malformed')
+      answer(...balance('1000', transaction(fields)))
+      await rejectsWith(readBalance(conn), 'malformed')
     }
   })
 })
@@ -196,23 +214,23 @@ describe('marbles answers mapped to states', () => {
     for (const failure of failures) {
       resetMarblesCache()
       answer(failure)
-      await rejectsWith(readWallet(conn), 'unreachable')
+      await rejectsWith(readBalance(conn), 'unreachable')
     }
   })
 
   it('an unknown key or a wallet it does not reach is refused, an expired key is expired', async () => {
     answer(marblesError(401, 'unauthorized'))
-    await rejectsWith(readWallet(conn), 'refused')
+    await rejectsWith(readBalance(conn), 'refused')
     resetMarblesCache()
     answer(marblesError(404, 'not_found'))
-    await rejectsWith(readWallet(conn), 'refused')
+    await rejectsWith(readBalance(conn), 'refused')
     resetMarblesCache()
     answer(marblesError(401, 'key_expired'))
-    await rejectsWith(readWallet(conn), 'expired')
+    await rejectsWith(readBalance(conn), 'expired')
   })
 
   it('maps the switch reads onto the wallet read of admin-12', async () => {
-    answer(json(200, wallet('5000')))
+    answer(...balance('5000'))
     assert.deepEqual(await readMarblesWalletSats(conn), { sats: 5 })
     for (const [failure, reason] of [
       [marblesError(503, 'busy'), 'unreachable'],
@@ -230,59 +248,68 @@ describe('marbles answers mapped to states', () => {
 describe('rate limit', () => {
   it('a 429 is unreachable, and the key is not asked again before Retry-After', async (t) => {
     t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 })
-    answer(marblesError(429, 'rate_limited', { 'Retry-After': '30' }), json(200, wallet('1000')))
-    await rejectsWith(readWallet(conn), 'unreachable')
+    answer(marblesError(429, 'rate_limited', { 'Retry-After': '30' }), ...balance())
+    await rejectsWith(readBalance(conn), 'unreachable')
 
     // Every read with that key waits, cached or not, and the other wallet too.
     t.mock.timers.setTime(1_000_000 + 29_000)
-    await rejectsWith(readWallet(conn, { fresh: true }), 'unreachable')
+    await rejectsWith(readBalance(conn, { fresh: true }), 'unreachable')
     await rejectsWith(readDeposit({ ...conn, wallet: 'OtherWallet00001' }), 'unreachable')
     await rejectsWith(readKey(conn), 'unreachable')
     assert.equal(calls.length, 1)
 
     // Another key is not held back.
-    answer(json(200, wallet('1000')))
-    assert.equal((await readWallet({ ...conn, key: `mbl_${'b'.repeat(43)}` })).sats, 1)
+    answer(...balance())
+    assert.equal((await readBalance({ ...conn, key: `mbl_${'b'.repeat(43)}` })).sats, 1)
 
     t.mock.timers.setTime(1_000_000 + 30_000)
-    assert.equal((await readWallet(conn, { fresh: true })).sats, 1)
+    answer(...balance())
+    assert.equal((await readBalance(conn, { fresh: true })).sats, 1)
   })
 
   it('waits a minute when Retry-After is missing or unreadable', async (t) => {
     t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 })
-    answer(marblesError(429, 'rate_limited'), json(200, wallet('1000')))
-    await rejectsWith(readWallet(conn), 'unreachable')
+    answer(marblesError(429, 'rate_limited'), ...balance())
+    await rejectsWith(readBalance(conn), 'unreachable')
     t.mock.timers.setTime(1_000_000 + 59_000)
-    await rejectsWith(readWallet(conn, { fresh: true }), 'unreachable')
+    await rejectsWith(readBalance(conn, { fresh: true }), 'unreachable')
     t.mock.timers.setTime(1_000_000 + 60_000)
-    assert.equal((await readWallet(conn, { fresh: true })).sats, 1)
+    assert.equal((await readBalance(conn, { fresh: true })).sats, 1)
+  })
+
+  it('takes Retry-After as an HTTP date too', async (t) => {
+    t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-14T10:00:00Z') })
+    answer(marblesError(429, 'rate_limited', { 'Retry-After': 'Sat, 14 Nov 2026 10:00:20 GMT' }), ...balance())
+    await rejectsWith(readBalance(conn), 'unreachable')
+    t.mock.timers.setTime(Date.parse('2026-11-14T10:00:19Z'))
+    await rejectsWith(readBalance(conn, { fresh: true }), 'unreachable')
+    t.mock.timers.setTime(Date.parse('2026-11-14T10:00:20Z'))
+    assert.equal((await readBalance(conn, { fresh: true })).sats, 1)
   })
 })
 
 describe('cache', () => {
   it('concurrent callers share one fetch', async () => {
-    answer(json(200, wallet('1000')))
-    const reads = await Promise.all([readWallet(conn), readWallet(conn), readWallet(conn)])
+    answer(...balance())
+    const reads = await Promise.all([readBalance(conn), readBalance(conn), readBalance(conn)])
     assert.deepEqual(reads.map(r => r.sats), [1, 1, 1])
-    assert.equal(calls.length, 1)
+    assert.equal(calls.length, 2)
   })
 
-  it('keeps balance and last payment for a few seconds, pay links for longer', async (t) => {
+  it('keeps the balance for a few seconds, pay links for longer', async (t) => {
     t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 })
-    answer(json(200, wallet('1000')), json(200, { transactions: [], next_cursor: null }), json(200, { pay_links: [payLink()] }))
-    await readWallet(conn)
-    await readLastPayment(conn)
+    answer(...balance(), json(200, { pay_links: [payLink()] }))
+    await readBalance(conn)
     await readDeposit(conn)
     assert.equal(calls.length, 3)
 
     t.mock.timers.setTime(1_000_000 + 4_000)
-    await Promise.all([readWallet(conn), readLastPayment(conn), readDeposit(conn)])
+    await Promise.all([readBalance(conn), readDeposit(conn)])
     assert.equal(calls.length, 3)
 
-    answer(json(200, wallet('2000')), json(200, { transactions: [], next_cursor: null }))
+    answer(...balance('2000'))
     t.mock.timers.setTime(1_000_000 + 5_000)
-    assert.equal((await readWallet(conn)).sats, 2)
-    await readLastPayment(conn)
+    assert.equal((await readBalance(conn)).sats, 2)
     await readDeposit(conn)
     assert.equal(calls.length, 5)
 
@@ -292,18 +319,32 @@ describe('cache', () => {
     assert.equal(calls.length, 6)
   })
 
+  it('keeps a failed read only a few seconds, so a recovered marbles offers deposits again soon', async (t) => {
+    t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 })
+    answer(marblesError(503, 'busy'))
+    await rejectsWith(readDeposit(conn), 'unreachable')
+
+    t.mock.timers.setTime(1_000_000 + 4_000)
+    await rejectsWith(readDeposit(conn), 'unreachable')
+    assert.equal(calls.length, 1)
+
+    answer(json(200, { pay_links: [payLink()] }))
+    t.mock.timers.setTime(1_000_000 + 5_000)
+    assert.equal((await readDeposit(conn))?.lnurl, 'LNURL1NEWEST')
+  })
+
   it('caches per wallet and key: another key never reads a cached answer', async () => {
-    answer(json(200, wallet('1000')), marblesError(401, 'unauthorized'))
-    await readWallet(conn)
-    await rejectsWith(readWallet({ ...conn, key: `mbl_${'c'.repeat(43)}` }), 'refused')
+    answer(...balance(), marblesError(401, 'unauthorized'))
+    await readBalance(conn)
+    await rejectsWith(readBalance({ ...conn, key: `mbl_${'c'.repeat(43)}` }), 'refused')
   })
 
   it('a fresh read asks marbles and updates the cache', async () => {
-    answer(json(200, wallet('1000')), json(200, wallet('2000')))
-    await readWallet(conn)
-    assert.equal((await readWallet(conn, { fresh: true })).sats, 2)
-    assert.equal((await readWallet(conn)).sats, 2)
-    assert.equal(calls.length, 2)
+    answer(...balance('1000'), ...balance('2000'))
+    await readBalance(conn)
+    assert.equal((await readBalance(conn, { fresh: true })).sats, 2)
+    assert.equal((await readBalance(conn)).sats, 2)
+    assert.equal(calls.length, 4)
   })
 })
 

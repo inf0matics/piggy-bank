@@ -1,5 +1,5 @@
 import { MarblesSettingsSchema } from '~/server/domain/user'
-import { checkKeyFor, MarblesError, readDeposit, readKey, readWallet, type MarblesFailure } from '~/server/utils/Marbles'
+import { checkKeyFor, MarblesError, readBalance, readDeposit, readKey, type MarblesFailure } from '~/server/utils/Marbles'
 
 const FAILURES: Record<MarblesFailure, string> = {
   unreachable: 'marbles cannot be reached. Check the URL, or try again in a minute.',
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     const checked = checkKeyFor(key, marbles.wallet)
     if (!checked.ok) return checked
 
-    const [wallet, deposit] = await Promise.all([readWallet(marbles, { fresh: true }), readDeposit(marbles, { fresh: true })])
+    const [wallet, deposit] = await Promise.all([readBalance(marbles, { fresh: true }), readDeposit(marbles, { fresh: true })])
     return {
       ok: true,
       walletName: checked.walletName,

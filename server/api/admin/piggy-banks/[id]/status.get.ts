@@ -1,6 +1,6 @@
 import type { UserSchema } from '~/server/domain/user'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
-import { isUnreachable, readDeposit, readLastPayment, type MarblesConnection } from '~/server/utils/Marbles'
+import { isUnreachable, readBalance, readDeposit, type MarblesConnection } from '~/server/utils/Marbles'
 
 type WalletStatus = {
   lnurlp: 'active' | 'inactive' | 'unreachable'
@@ -49,15 +49,15 @@ const lnbitsStatus = async (user: UserSchema): Promise<WalletStatus> => {
 // The cached marbles reads the dashboard uses too, so the list costs no extra
 // requests against the key's rate limit while the child's dashboard is open.
 const marblesStatus = async (marbles: MarblesConnection): Promise<WalletStatus> => {
-  const [deposit, last] = await Promise.allSettled([readDeposit(marbles), readLastPayment(marbles)])
+  const [deposit, balance] = await Promise.allSettled([readDeposit(marbles), readBalance(marbles)])
 
-  if (last.status === 'rejected' && isUnreachable(last.reason)) return UNREACHABLE
+  if (balance.status === 'rejected' && isUnreachable(balance.reason)) return UNREACHABLE
 
   const link = deposit.status === 'fulfilled' ? deposit.value : null
   return {
     lnurlp: link ? 'active' : 'inactive',
     lnurl: link?.lnurl ?? null,
     address: link?.address ?? null,
-    lastPaymentTime: last.status === 'fulfilled' ? (last.value?.time ?? null) : null,
+    lastPaymentTime: balance.status === 'fulfilled' ? (balance.value.lastPayment?.time ?? null) : null,
   }
 }
