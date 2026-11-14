@@ -34,7 +34,7 @@
         >
           <span class="font-bold text-sm text-highlighted group-hover:underline">{{ pb.name }}</span>
           <span class="text-dimmed mx-1">@</span>
-          <span class="text-sm text-muted group-hover:underline">{{ hostOf(pb.walletUrl) }}</span>
+          <span class="text-sm text-muted group-hover:underline">{{ hostOf(walletUrlOf(pb)) }}</span>
         </NuxtLink>
         <div class="flex items-center gap-1 mt-0.5 text-[11px] text-dimmed">
           <UIcon name="i-tabler-clock" />
@@ -227,12 +227,12 @@ const walletLastTxText = (status: PiggyBankStatus | undefined): string => {
 
 const rows = computed(() => piggyBanks.value.map((pb) => {
   if (pb.balance.source === 'manual') {
-    return { ...pb, walletUrl: pb.lnbitsUrl, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange?.time ?? null) }
+    return { ...pb, state: 'manual' as const, badge: BADGES.manual, lastTx: lastTxText(pb.balance.lastChange?.time ?? null) }
   }
   const status = statuses.get(pb.id)
   const state = status?.lnurlp ?? 'checking'
   const badge = pb.balance.source === 'marbles' ? MARBLES_BADGES[state] : BADGES[state]
-  return { ...pb, walletUrl: walletUrlOf(pb), state, badge, lastTx: walletLastTxText(status) }
+  return { ...pb, state, badge, lastTx: walletLastTxText(status) }
 }))
 
 const revealed = reactive(new Set<string>())

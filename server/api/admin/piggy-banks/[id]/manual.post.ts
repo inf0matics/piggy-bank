@@ -40,14 +40,14 @@ export default defineEventHandler(async (event) => {
 // the freeze (none when the wallet has no payments). Otherwise the freeze
 // itself is the first change.
 const freezeLastChange = async (user: UserSchema, from: WalletSource, sats: number): Promise<BalanceChange | null> => {
+  const freeze = { time: Math.floor(Date.now() / 1000), sats, comment: null }
   try {
     if (from === 'marbles') {
-      if (!user.marbles) throw new Error('no marbles settings')
-      return await readLastPayment(user.marbles, { fresh: true })
+      return user.marbles ? await readLastPayment(user.marbles, { fresh: true }) : freeze
     }
     const last = await new LnBits({ apiKey: user.lnbits.invoiceKey, url: user.lnbits.url }).getLastPayment()
     return last ? lnbitsPaymentToChange(last) : null
   } catch {
-    return { time: Math.floor(Date.now() / 1000), sats, comment: null }
+    return freeze
   }
 }

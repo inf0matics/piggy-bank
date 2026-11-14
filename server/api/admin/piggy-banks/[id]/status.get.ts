@@ -1,6 +1,6 @@
 import type { UserSchema } from '~/server/domain/user'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
-import { MarblesError, readDeposit, readLastPayment, type MarblesConnection } from '~/server/utils/Marbles'
+import { isUnreachable, readDeposit, readLastPayment, type MarblesConnection } from '~/server/utils/Marbles'
 
 type WalletStatus = {
   lnurlp: 'active' | 'inactive' | 'unreachable'
@@ -51,7 +51,7 @@ const lnbitsStatus = async (user: UserSchema): Promise<WalletStatus> => {
 const marblesStatus = async (marbles: MarblesConnection): Promise<WalletStatus> => {
   const [deposit, last] = await Promise.allSettled([readDeposit(marbles), readLastPayment(marbles)])
 
-  if (last.status === 'rejected' && last.reason instanceof MarblesError && last.reason.reason === 'unreachable') return UNREACHABLE
+  if (last.status === 'rejected' && isUnreachable(last.reason)) return UNREACHABLE
 
   const link = deposit.status === 'fulfilled' ? deposit.value : null
   return {

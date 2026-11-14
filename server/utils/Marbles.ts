@@ -33,6 +33,9 @@ export class MarblesError extends Error {
   }
 }
 
+/** Whether `error` says marbles could not be reached (as opposed to refusing). */
+export const isUnreachable = (error: unknown): boolean => error instanceof MarblesError && error.reason === 'unreachable'
+
 // As for LNBits: long enough for a healthy marbles, short enough that a page
 // waiting on a dead one does not feel frozen.
 const TIMEOUT_MS = 3_000

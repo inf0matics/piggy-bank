@@ -2,7 +2,7 @@ import z from 'zod'
 import { lnbitsPaymentToChange, type UserSchema } from '~/server/domain/user'
 import getKrakenBtcRate from '~/server/utils/getKrakenBtcRate'
 import LnBits, { LnBitsUnreachableError } from '~/server/utils/LnBits'
-import { MarblesError, readDeposit, readLastPayment, readWallet, type MarblesConnection } from '~/server/utils/Marbles'
+import { isUnreachable, readDeposit, readLastPayment, readWallet, type MarblesConnection } from '~/server/utils/Marbles'
 import { satsToEur } from '~/utils/manualBalanceChange'
 
 // `available: false` — the wallet (LNBits or marbles) cannot be reached right
@@ -34,6 +34,11 @@ const available = async (name: string, balance: DashboardBalance) => {
   const eur = rate === null ? null : satsToEur(balance.sats, rate)
   return DashboardDto.parse({ available: true, name, ...balance, eur, rate })
 }
+
+const marblesFailed = () => createError({
+  statusCode: 500,
+  statusMessage: 'Error fetching the marbles balance. Please check the marbles settings!',
+})
 
 export default defineLoggedInEventHandler(async (event, authUser) => {
   const user = authUser as UserSchema
@@ -103,11 +108,6 @@ export default defineLoggedInEventHandler(async (event, authUser) => {
   })
 })
 
-const marblesFailed = () => createError({
-  statusCode: 500,
-  statusMessage: 'Error fetching the marbles balance. Please check the marbles settings!',
-})
-
 // The balance, last payment and deposit link from marbles (cached reads), or
 // null while marbles is unreachable. A refused or expired key and a malformed
 // answer are errors, like a refused LNBits invoice key. A failing pay-link
@@ -115,8 +115,7 @@ const marblesFailed = () => createError({
 const readMarblesBalance = async (marbles: MarblesConnection): Promise<DashboardBalance | null> => {
   const [wallet, last, deposit] = await Promise.allSettled([readWallet(marbles), readLastPayment(marbles), readDeposit(marbles)])
   if (wallet.status === 'rejected' || last.status === 'rejected') {
-    const reasons = [wallet, last].flatMap(read => read.status === 'rejected' ? [read.reason] : [])
-    if (reasons.some(reason => reason instanceof MarblesError && reason.reason === 'unreachable')) return null
+    if ([wallet, last].some(read => read.status === 'rejected' && isUnreachable(read.reason))) return null
     throw marblesFailed()
   }
   const link = deposit.status === 'fulfilled' ? deposit.value : null

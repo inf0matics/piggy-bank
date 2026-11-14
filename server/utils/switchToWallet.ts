@@ -5,7 +5,7 @@ import { readMarblesWalletSats } from './Marbles'
 import { checkSwitchBack, SOURCE_NAMES, type WalletRead, type WalletSource } from '../../utils/switchBack'
 
 /** The balance of the piggy bank's `source` wallet, read fresh; refused without marbles settings. */
-export const readSourceWalletSats = async (user: UserSchema, source: WalletSource): Promise<WalletRead> => {
+const readSourceWalletSats = async (user: UserSchema, source: WalletSource): Promise<WalletRead> => {
   if (source === 'lnbits') return readWalletSats(user.lnbits)
   return user.marbles ? readMarblesWalletSats(user.marbles) : { sats: null, reason: 'refused' }
 }
@@ -33,20 +33,25 @@ export const switchToWallet = async (event: H3Event, to: WalletSource): Promise<
     throw createError({ statusCode: 400, statusMessage: parsed.error.issues[0]?.message ?? 'Invalid input' })
   }
 
-  const notManual = (source: WalletSource) => createError({
-    statusCode: 409,
-    statusMessage: source === to
-      ? `Piggy bank is already on ${SOURCE_NAMES[to]}`
-      : `Piggy bank is on ${SOURCE_NAMES[source]}. Switch it to manual first.`,
-  })
-  const noMarbles = () => createError({ statusCode: 409, statusMessage: 'Save the marbles settings first.' })
-
-  const user = getOwnedUser(id, admin.sub)
-  if (!user) {
-    throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
+  // The piggy bank, if it is the owner's, manual, and (for marbles) has its
+  // settings saved.
+  const switchable = () => {
+    const user = getOwnedUser(id, admin.sub)
+    if (!user) throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
+    const { balance } = user
+    if (balance.source !== 'manual') {
+      throw createError({
+        statusCode: 409,
+        statusMessage: balance.source === to
+          ? `Piggy bank is already on ${SOURCE_NAMES[to]}`
+          : `Piggy bank is on ${SOURCE_NAMES[balance.source]}. Switch it to manual first.`,
+      })
+    }
+    if (to === 'marbles' && !user.marbles) throw createError({ statusCode: 409, statusMessage: 'Save the marbles settings first.' })
+    return { ...user, balance }
   }
-  if (user.balance.source !== 'manual') throw notManual(user.balance.source)
-  if (to === 'marbles' && !user.marbles) throw noMarbles()
+
+  const user = switchable()
 
   const refused = checkSwitchBack(to, { manualSats: user.balance.sats, wallet: await readSourceWalletSats(user, to) }, parsed.data)
   if (refused) {
@@ -57,11 +62,26 @@ export const switchToWallet = async (event: H3Event, to: WalletSource): Promise<
   if (!updated) {
     // Deleted, switched, changed or its marbles settings removed by a
     // concurrent request while the wallet was being asked.
-    const current = getOwnedUser(id, admin.sub)
-    if (!current) throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
-    if (current.balance.source !== 'manual') throw notManual(current.balance.source)
-    if (to === 'marbles' && !current.marbles) throw noMarbles()
+    switchable()
     throw createError({ statusCode: 409, statusMessage: 'The manual balance has changed. Compare the balances again.' })
   }
   return updated
+}
+
+/**
+ * The current balance of the piggy bank's `source` wallet, read fresh, shown
+ * to the custodian before they switch it from that wallet to manual (they then
+ * enter the starting balance when the wallet cannot give it) or from manual to
+ * that wallet (refused then). `sats: null` with the `reason` when the wallet
+ * is unreachable, refuses the key (or no marbles settings are saved), or the
+ * marbles key expired.
+ */
+export const walletBalance = (event: H3Event, source: WalletSource): Promise<WalletRead> => {
+  const admin = requireAdmin(event)
+
+  const user = getOwnedUser(getRouterParam(event, 'id') as string, admin.sub)
+  if (!user) {
+    throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
+  }
+  return readSourceWalletSats(user, source)
 }
