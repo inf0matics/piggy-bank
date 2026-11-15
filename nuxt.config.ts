@@ -89,6 +89,17 @@ export default defineNuxtConfig({
   },
   // The privacy policy used to live at /privacy-policy; keep old links working.
   routeRules: {
+    // Security headers on every response. Nothing frames the app, so framing is
+    // refused outright. x-powered-by is removed in server/plugins/04.securityHeaders.ts.
+    '/**': {
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'Content-Security-Policy': 'frame-ancestors \'none\'',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+      },
+    },
     '/privacy-policy': { redirect: { to: '/privacy', statusCode: 301 } },
   },
   experimental: {
