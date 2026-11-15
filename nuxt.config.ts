@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { FALLBACK_COOKIE_KEY } from './server/utils/logtoConfig'
+
 export default defineNuxtConfig({
   // The admin design system comes from the shared tsp.tools theme layer, applied
   // in SCOPED mode: only /admin is themed (amber/anthracite, toggleable dark by
@@ -56,7 +58,7 @@ export default defineNuxtConfig({
       endpoint: '',
       appId: '',
       appSecret: '',
-      cookieEncryptionKey: 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY',
+      cookieEncryptionKey: FALLBACK_COOKIE_KEY,
       // Request profile/email so the ID token carries name/username/email for the
       // admin identity display (the `sub` claim, used for ownership, is always present).
       // `identities` lets the userinfo endpoint return the user's social-connector
@@ -87,7 +89,6 @@ export default defineNuxtConfig({
       },
     },
   },
-  // The privacy policy used to live at /privacy-policy; keep old links working.
   routeRules: {
     // Security headers on every response. Nothing frames the app, so framing is
     // refused outright. x-powered-by is removed in server/plugins/04.securityHeaders.ts.
@@ -100,6 +101,7 @@ export default defineNuxtConfig({
         'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     },
+    // The privacy policy used to live at /privacy-policy; keep old links working.
     '/privacy-policy': { redirect: { to: '/privacy', statusCode: 301 } },
   },
   experimental: {

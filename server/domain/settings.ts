@@ -14,19 +14,10 @@ export const DEFAULT_LNBITS_URL_KEY = 'default_lnbits_url'
  */
 export const DEFAULT_MARBLES_URL_KEY = 'default_marbles_url'
 
-const defaultUrl = (error: string) => z.string({ error }).trim().max(2048, { error }).refine(
-  value => value === '' || isHttpUrl(value),
-  { error },
-).default('')
-
-const isHttpUrl = (value: string): boolean => {
-  try {
-    const { protocol } = new URL(value)
-    return protocol === 'http:' || protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+// Empty (no default) or an http(s) URL, the same rule as LnbitsUrlSchema.
+const defaultUrl = (error: string) => z.string({ error }).trim().max(2048, { error })
+  .pipe(z.union([z.literal('', { error }), z.url({ protocol: /^https?$/, error })], { error }))
+  .default('')
 
 /** PUT /api/admin/settings: each default is empty (none) or an http(s) URL. */
 export const SettingsInputSchema = z.strictObject({

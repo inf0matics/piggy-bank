@@ -1,4 +1,6 @@
-// Keep in sync with the `cookieEncryptionKey` fallback in nuxt.config.ts.
+// The `cookieEncryptionKey` fallback in nuxt.config.ts: @logto/node's cookie
+// storage needs a non-empty key even with admin auth off. It is public, so the
+// app refuses to start with it while Logto is on (logtoConfigState).
 export const FALLBACK_COOKIE_KEY = 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY'
 
 /**

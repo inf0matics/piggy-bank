@@ -21,8 +21,8 @@ describe('logtoConfigState', () => {
     assert.equal(logtoConfigState({ endpoint: 'https://logto.tsp.tools/', cookieEncryptionKey: 'a-real-secret' }), 'configured')
   })
 
-  it('matches the fallback in nuxt.config.ts', async () => {
+  it('is the fallback nuxt.config.ts uses', async () => {
     const config = await import('node:fs').then(fs => fs.readFileSync(new URL('../../nuxt.config.ts', import.meta.url), 'utf8'))
-    assert.ok(config.includes(`cookieEncryptionKey: '${FALLBACK_COOKIE_KEY}'`))
+    assert.ok(config.includes('cookieEncryptionKey: FALLBACK_COOKIE_KEY,'))
   })
 })

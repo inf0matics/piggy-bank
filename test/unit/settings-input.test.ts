@@ -23,6 +23,11 @@ describe('SettingsInputSchema', () => {
     }
   })
 
+  it('names the field in the message', () => {
+    assert.equal(SettingsInputSchema.safeParse({ defaultLnbitsUrl: 'not a url' }).error?.issues[0]?.message, 'The default LNBits URL must be an http(s) URL')
+    assert.equal(SettingsInputSchema.safeParse({ defaultMarblesUrl: 'ftp://x' }).error?.issues[0]?.message, 'The default marbles URL must be an http(s) URL')
+  })
+
   it('refuses an overlong URL', () => {
     const long = `https://example.com/${'a'.repeat(2048)}`
     assert.equal(SettingsInputSchema.safeParse({ defaultLnbitsUrl: long }).success, false)
