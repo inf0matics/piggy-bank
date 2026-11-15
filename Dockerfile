@@ -39,4 +39,11 @@ COPY package.json /app
 # Optional, only needed if you rely on unbundled dependencies
 # COPY --from=build /app/node_modules /app/node_modules
 
+# Run as the unprivileged node user (uid 1000). It owns the directories the
+# SQLite file may live in: /data (the production volume; a fresh named volume
+# takes this ownership) and /app/data (the default DATABASE_PATH). An existing
+# volume or bind mount keeps its owner and must be chown'ed to 1000 on the host.
+RUN mkdir -p /data /app/data && chown node:node /data /app/data
+USER node
+
 CMD [ "node", ".output/server/index.mjs" ]
