@@ -6,15 +6,23 @@ import { describe, it } from 'node:test'
 import { FALLBACK_COOKIE_KEY, logtoConfigState } from '../../server/utils/logtoConfig.ts'
 
 describe('logtoConfigState', () => {
-  it('is "disabled" without an endpoint, whatever the key', () => {
+  it('is "disabled" without an endpoint, with the fallback or a key of its own', () => {
     assert.equal(logtoConfigState({ endpoint: '', cookieEncryptionKey: FALLBACK_COOKIE_KEY }), 'disabled')
-    assert.equal(logtoConfigState({ endpoint: '', cookieEncryptionKey: '' }), 'disabled')
+    assert.equal(logtoConfigState({ endpoint: '', cookieEncryptionKey: 'a-real-secret' }), 'disabled')
   })
 
-  it('is "insecure" with an endpoint and the fallback, an empty or a blank key', () => {
-    for (const cookieEncryptionKey of [FALLBACK_COOKIE_KEY, '', '   ']) {
-      assert.equal(logtoConfigState({ endpoint: 'https://logto.tsp.tools/', cookieEncryptionKey }), 'insecure', JSON.stringify(cookieEncryptionKey))
+  it('is "no-key" with an empty or blank key, with or without an endpoint', () => {
+    // An empty env var replaces the fallback, and @logto/node then throws on
+    // every request, Logto on or off.
+    for (const endpoint of ['', 'https://logto.tsp.tools/']) {
+      for (const cookieEncryptionKey of ['', '   ']) {
+        assert.equal(logtoConfigState({ endpoint, cookieEncryptionKey }), 'no-key', JSON.stringify({ endpoint, cookieEncryptionKey }))
+      }
     }
+  })
+
+  it('is "insecure" with an endpoint and the fallback key', () => {
+    assert.equal(logtoConfigState({ endpoint: 'https://logto.tsp.tools/', cookieEncryptionKey: FALLBACK_COOKIE_KEY }), 'insecure')
   })
 
   it('is "configured" with an endpoint and a key of its own', () => {
