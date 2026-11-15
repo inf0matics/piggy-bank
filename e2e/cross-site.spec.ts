@@ -64,3 +64,12 @@ test('the app\'s own sign-out is not refused', async ({ request }) => {
   })
   expect(response.status()).not.toBe(403)
 })
+
+test('a cross-site sign-out behind a doubled slash is refused too', async ({ request, baseURL }) => {
+  // A full URL: '//admin/…' alone would be read as a host name.
+  const response = await request.get(`${baseURL}//admin/sign-out`, {
+    headers: { ...ADMIN_COOKIE, 'sec-fetch-site': 'same-site' },
+    maxRedirects: 0,
+  })
+  expect(response.status()).toBe(403)
+})

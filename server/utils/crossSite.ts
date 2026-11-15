@@ -29,12 +29,22 @@ const SIGN_OUT_PATH = '/admin/sign-out'
  * not get by signing in itself.
  */
 export const isCrossSiteRequest = ({ method, path, host, secFetchSite, origin }: CheckedRequest): boolean => {
-  const pathname = path.split('?', 1)[0]
-  if (SAFE_METHODS.has(method.toUpperCase()) && pathname !== SIGN_OUT_PATH) return false
+  if (SAFE_METHODS.has(method.toUpperCase()) && pathnameOf(path) !== SIGN_OUT_PATH) return false
 
   if (secFetchSite !== undefined) return secFetchSite !== 'same-origin' && secFetchSite !== 'none'
   if (origin !== undefined) return originHost(origin) !== host
   return false
+}
+
+// The pathname as h3's getRequestURL gives it, which is what @logto/nuxt
+// matches its routes on: leading slashes and backslashes collapsed, then
+// parsed as a URL (backslashes become slashes, dot segments resolve).
+const pathnameOf = (path: string): string => {
+  try {
+    return new URL(path.replace(/^[/\\]+/, '/'), 'http://localhost').pathname
+  } catch {
+    return path
+  }
 }
 
 const originHost = (origin: string): string | null => {

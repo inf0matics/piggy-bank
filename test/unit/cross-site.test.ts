@@ -55,6 +55,13 @@ describe('isCrossSiteRequest', () => {
     }
   })
 
+  it('sees the sign-out behind leading slashes, as Logto does', () => {
+    // h3's getRequestURL, which Logto matches on, collapses leading slashes.
+    for (const path of ['//admin/sign-out', '///admin/sign-out?x=1', '/\\admin/sign-out']) {
+      assert.equal(write({ secFetchSite: 'cross-site' }, 'GET', path), true, path)
+    }
+  })
+
   it('leaves other GETs under /admin alone', () => {
     assert.equal(write({ secFetchSite: 'cross-site' }, 'GET', '/admin/sign-in'), false)
     assert.equal(write({ secFetchSite: 'cross-site' }, 'GET', '/admin/callback'), false)
