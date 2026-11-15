@@ -1,6 +1,37 @@
 # Changelog
 
 
+## v1.18.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.17.0...v1.18.0)
+
+### 🚀 Enhancements
+
+- **marbles:** API v1 client with cache, rate-limit wait and state mapping ([339ee8e](https://github.com/inf0matics/piggy-bank/commit/339ee8e))
+- **marbles:** Marbles settings per piggy bank and marbles as a balance source ([f9b5d80](https://github.com/inf0matics/piggy-bank/commit/f9b5d80))
+- **admin:** Marbles settings, switches and list rows; marbles e2e mock ([e026395](https://github.com/inf0matics/piggy-bank/commit/e026395))
+
+### 🩹 Fixes
+
+- **marbles:** Read balance and last payment as one cached read; keep failures briefly ([0e627a3](https://github.com/inf0matics/piggy-bank/commit/0e627a3))
+- **security:** Serve every response with the security headers ([4490be7](https://github.com/inf0matics/piggy-bank/commit/4490be7))
+- **security:** Refuse writes another site sends with the admin's cookie ([5e38566](https://github.com/inf0matics/piggy-bank/commit/5e38566))
+- **security:** Run the container as the unprivileged node user ([fcd3a11](https://github.com/inf0matics/piggy-bank/commit/fcd3a11))
+- **security:** See the sign-out behind leading slashes in the cross-site check ([30fd6a9](https://github.com/inf0matics/piggy-bank/commit/30fd6a9))
+- **security:** Accept only http(s) LNBits URLs and never follow their redirects ([a10920e](https://github.com/inf0matics/piggy-bank/commit/a10920e))
+- **security:** Validate the default URLs in the admin settings ([2652fd2](https://github.com/inf0matics/piggy-bank/commit/2652fd2))
+- **security:** Refuse to start with Logto on but no cookie key of its own ([2139bd4](https://github.com/inf0matics/piggy-bank/commit/2139bd4))
+- **review:** Refuse to start with an empty Logto cookie key ([bd51620](https://github.com/inf0matics/piggy-bank/commit/bd51620))
+
+### 💅 Refactors
+
+- **marbles:** Share switch guards and balance endpoint, name the unreachable check ([f9a7273](https://github.com/inf0matics/piggy-bank/commit/f9a7273))
+- One source for the Logto fallback key, z.url for the settings URLs ([0045a2f](https://github.com/inf0matics/piggy-bank/commit/0045a2f))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.17.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.16.0...v1.17.0)
