@@ -283,3 +283,19 @@ test('settings: a default LNBits URL persists and pre-fills the create form', as
   await page.goto('/admin/piggy-banks/new')
   await expect(page.locator('#lnbitsUrl')).toHaveValue('http://lnbits-mock')
 })
+
+test('settings: a default that is not an http(s) URL is refused with a message', async ({ page }) => {
+  await page.goto('/admin/settings')
+  await page.locator('#default-lnbits-url').fill('http://lnbits-mock')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Saved.')).toBeVisible()
+
+  await page.locator('#default-lnbits-url').fill('javascript:alert(1)')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('The default LNBits URL must be an http(s) URL')).toBeVisible()
+  await expect(page.getByText('Saved.')).toBeHidden()
+
+  // The earlier default is kept.
+  await page.reload()
+  await expect(page.locator('#default-lnbits-url')).toHaveValue('http://lnbits-mock')
+})

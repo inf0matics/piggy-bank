@@ -54,6 +54,12 @@
       >
         Saved.
       </p>
+      <p
+        v-if="error"
+        class="text-sm text-error mt-3"
+      >
+        {{ error }}
+      </p>
 
       <button
         type="submit"
@@ -80,16 +86,21 @@ const defaultLnbitsUrl = ref(settings.value?.defaultLnbitsUrl ?? '')
 const defaultMarblesUrl = ref(settings.value?.defaultMarblesUrl ?? '')
 const submitting = ref(false)
 const saved = ref(false)
+const error = ref('')
 
 const save = async () => {
   submitting.value = true
   saved.value = false
+  error.value = ''
   try {
     await $fetch('/api/admin/settings', {
       method: 'PUT',
       body: { defaultLnbitsUrl: defaultLnbitsUrl.value, defaultMarblesUrl: defaultMarblesUrl.value },
     })
     saved.value = true
+  } catch (e) {
+    const err = e as { data?: { statusMessage?: string } }
+    error.value = err?.data?.statusMessage || 'Could not save the settings'
   } finally {
     submitting.value = false
   }
