@@ -1,23 +1,21 @@
 import { consola } from 'consola'
+import { logtoConfigState } from '../utils/logtoConfig'
 
-// Keep in sync with the `cookieEncryptionKey` fallback in nuxt.config.ts.
-const FALLBACK_COOKIE_KEY = 'insecure-fallback-set-NUXT_LOGTO_COOKIE_ENCRYPTION_KEY'
-
-// Surfaces the state of the admin (Logto) auth configuration at startup. The
-// app intentionally stays up even when Logto is unconfigured (admin login is
-// just disabled), so make the operator aware of what's going on.
+// Checks the admin (Logto) auth configuration at startup. Without an endpoint
+// the app stays up with admin login disabled. With an endpoint but no cookie
+// encryption key of its own it refuses to start: the built-in fallback key is
+// public, so anyone could forge an admin session.
 export default defineNitroPlugin(() => {
   const { logto } = useRuntimeConfig()
 
-  if (!logto?.endpoint) {
-    consola.warn('[logto] Admin auth is not configured (NUXT_LOGTO_ENDPOINT is empty). The /admin landing page works, but "Login as admin" is disabled. Set NUXT_LOGTO_* to enable it.')
-    return
+  switch (logtoConfigState({ endpoint: logto?.endpoint ?? '', cookieEncryptionKey: logto?.cookieEncryptionKey ?? '' })) {
+    case 'disabled':
+      consola.warn('[logto] Admin auth is not configured (NUXT_LOGTO_ENDPOINT is empty). The /admin landing page works, but "Login as admin" is disabled. Set NUXT_LOGTO_* to enable it.')
+      return
+    case 'insecure':
+      consola.error('[logto] NUXT_LOGTO_COOKIE_ENCRYPTION_KEY is not set while Logto is enabled. Refusing to start: the built-in key is public. Set it to a random secret.')
+      throw new Error('NUXT_LOGTO_COOKIE_ENCRYPTION_KEY is not set while Logto is enabled')
+    case 'configured':
+      consola.info('[logto] Admin auth configured')
   }
-
-  if (logto.cookieEncryptionKey === FALLBACK_COOKIE_KEY) {
-    consola.error('[logto] NUXT_LOGTO_COOKIE_ENCRYPTION_KEY is not set while Logto is enabled — the admin session cookie is using an INSECURE built-in key. Set NUXT_LOGTO_COOKIE_ENCRYPTION_KEY to a random secret.')
-    return
-  }
-
-  consola.info('[logto] Admin auth configured')
 })
