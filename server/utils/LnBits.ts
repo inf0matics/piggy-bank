@@ -125,6 +125,8 @@ export default class LnBits {
     try {
       response = await fetch(`${this.url}${path}`, {
         headers: { 'X-Api-Key': this.apiKey },
+        // A redirect would carry the key to wherever it points.
+        redirect: 'manual',
         signal: AbortSignal.timeout(this.timeoutMs),
       })
       text = await response.text()

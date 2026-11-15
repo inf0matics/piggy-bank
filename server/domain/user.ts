@@ -66,6 +66,9 @@ const requiredString = (error: string) => z.string({ error }).trim().min(1, { er
 
 const lnbitsUrlError = 'A valid LNBits URL is required'
 
+/** An LNBits instance: an http(s) URL (no other scheme is ever fetched). */
+export const LnbitsUrlSchema = z.string({ error: lnbitsUrlError }).trim().pipe(z.url({ protocol: /^https?$/, error: lnbitsUrlError }))
+
 const marblesUrlError = 'A valid marbles URL is required'
 const marblesKeyError = 'The marbles API key is mbl_ followed by 43 characters'
 const marblesWalletError = 'The marbles wallet id is 16 characters'
@@ -101,7 +104,7 @@ const optionalText = z.string().trim().nullish().transform(value => value ?? '')
 export const UserInputSchema = z.object({
   name: requiredString('Name is required'),
   accessKey: requiredString('PIN is required'),
-  lnbitsUrl: z.string({ error: lnbitsUrlError }).trim().pipe(z.url({ error: lnbitsUrlError })),
+  lnbitsUrl: LnbitsUrlSchema,
   invoiceKey: requiredString('Invoice key is required'),
   marblesUrl: optionalText,
   marblesKey: optionalText,

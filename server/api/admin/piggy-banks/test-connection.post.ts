@@ -1,8 +1,9 @@
 import { z } from 'zod'
+import { LnbitsUrlSchema } from '~/server/domain/user'
 import LnBits from '~/server/utils/LnBits'
 
 const Body = z.object({
-  lnbitsUrl: z.string().trim().pipe(z.url()),
+  lnbitsUrl: LnbitsUrlSchema,
   invoiceKey: z.string().trim().min(1),
 })
 

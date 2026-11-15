@@ -47,6 +47,12 @@ describe('UserInputSchema', () => {
     }
   })
 
+  it('rejects an LNBits URL that is not http(s)', () => {
+    for (const lnbitsUrl of ['ftp://legend.lnbits.com', 'javascript:alert(1)', 'file:///etc/passwd']) {
+      assert.equal(firstMessage({ ...validInput, lnbitsUrl }), 'A valid LNBits URL is required', lnbitsUrl)
+    }
+  })
+
   it('reports the field message when a field is missing or not a string', () => {
     const { name: _name, ...withoutName } = validInput
     assert.equal(firstMessage(withoutName), 'Name is required')
@@ -70,6 +76,17 @@ describe('LnBits response parsing', () => {
   }
 
   const lnbits = new LnBits({ apiKey: 'k', url: 'http://lnbits.test' })
+
+  it('does not follow redirects, so the key never travels to another host', async () => {
+    const inits: (RequestInit | undefined)[] = []
+    globalThis.fetch = async (_url: string | URL | Request, init?: RequestInit) => {
+      inits.push(init)
+      return new Response(null, { status: 302, headers: { Location: 'https://elsewhere.test/' } })
+    }
+    await assert.rejects(lnbits.getBalance())
+    assert.equal(inits[0]?.redirect, 'manual')
+    assert.equal(inits.length, 1)
+  })
 
   it('parses the last payment, preferring the LNURL comment over the memo', async () => {
     respondWith([{
