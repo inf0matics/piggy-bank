@@ -69,9 +69,11 @@ const TransactionsAnswer = z.object({
   })),
 })
 
+// marbles no longer sends `active`: deleted links are not listed. An older
+// marbles still lists deactivated ones with `active: false`.
 const PayLinksAnswer = z.object({
   pay_links: z.array(z.object({
-    active: z.boolean(),
+    active: z.boolean().optional(),
     lnurl: z.string().nullable(),
     address: z.string().nullable(),
   })),
@@ -171,6 +173,9 @@ const cached = <T>(id: string, ttlMs: number, read: () => Promise<T>, fresh = fa
 
 const walletId = (conn: MarblesConnection, what: string) => `${keyId(conn)}\n${conn.wallet}\n${what}`
 const walletPath = (conn: MarblesConnection) => `/wallets/${encodeURIComponent(conn.wallet)}`
+// marbles reads transactions only from the 30 days before now unless `from`
+// says otherwise; the last payment may be older.
+const LAST_PAYMENT_QUERY = 'limit=1&status=settled&from=1970-01-01T00:00:00Z'
 
 /** Forgets every cached read and rate-limit wait (tests). */
 export const resetMarblesCache = (): void => {
@@ -200,7 +205,7 @@ export interface MarblesBalance {
 export const readBalance = (conn: MarblesConnection, { fresh = false } = {}): Promise<MarblesBalance> =>
   cached(walletId(conn, 'balance'), BALANCE_TTL_MS, async () => {
     const wallet = parse(WalletAnswer, await request(conn, walletPath(conn)))
-    const { transactions } = parse(TransactionsAnswer, await request(conn, `${walletPath(conn)}/transactions?limit=1&status=settled`))
+    const { transactions } = parse(TransactionsAnswer, await request(conn, `${walletPath(conn)}/transactions?${LAST_PAYMENT_QUERY}`))
     return { name: wallet.name, sats: msatToSats(wallet.balance_msat), lastPayment: toChange(transactions[0]) }
   }, fresh)
 
@@ -215,9 +220,10 @@ const toChange = (last: z.infer<typeof TransactionsAnswer>['transactions'][numbe
 }
 
 /**
- * The deposit option: the newest active pay link's LNURL and Lightning
- * address. Null without an active link, without an LNURL (marbles has no
- * public URL set), or when the key lacks the `pay_links` right.
+ * The deposit option: the newest pay link's LNURL and Lightning address
+ * (skipping links an older marbles lists as deactivated). Null without a
+ * link, without an LNURL (marbles has no public URL set), or when the key
+ * lacks the `pay_links` right.
  */
 export const readDeposit = (conn: MarblesConnection, { fresh = false } = {}): Promise<{ lnurl: string, address: string | null } | null> =>
   cached(walletId(conn, 'pay-links'), PAY_LINKS_TTL_MS, async () => {
@@ -228,7 +234,7 @@ export const readDeposit = (conn: MarblesConnection, { fresh = false } = {}): Pr
       if (error instanceof MarblesError && error.reason === 'forbidden') return null
       throw error
     }
-    const link = parse(PayLinksAnswer, body).pay_links.find(l => l.active)
+    const link = parse(PayLinksAnswer, body).pay_links.find(l => l.active !== false)
     return link?.lnurl ? { lnurl: link.lnurl, address: link.address } : null
   }, fresh)
 

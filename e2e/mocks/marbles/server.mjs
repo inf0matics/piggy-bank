@@ -6,7 +6,8 @@
 // undocumented query parameters answer 400.
 //   GET /api/v1/key                                     -> { label, wallets, rights, expires_at, … }
 //   GET /api/v1/wallets/:wallet                         -> { name, balance_msat, … }
-//   GET /api/v1/wallets/:wallet/transactions?limit&status -> { transactions, next_cursor }
+//   GET /api/v1/wallets/:wallet/transactions?limit&status&from&to -> { transactions, next_cursor }
+//     always within a range, as marbles: without `from`, the 30 days before `to` or now
 //   GET /api/v1/wallets/:wallet/pay-links               -> { pay_links }
 //
 // The key's first characters after `mbl_` choose how marbles treats it:
@@ -19,8 +20,8 @@
 // Test-only control API (NOT part of marbles):
 //   POST /test/reset    -> restore the default state
 //   POST /test/set      -> { balance, payLink, payment, reachable, retryAfter }
-//                          payLink: null (none) | { lnurl, address, active }
-//                          payment: null | { sats, comment, kind, description, direction }
+//                          payLink: null (none) | { lnurl, address }
+//                          payment: null | { sats, comment, kind, description, direction, daysAgo }
 //                          retryAfter: null | seconds — every API call answers 429 with it
 //   POST /test/payment  -> an incoming LNURL-pay { sats, comment }
 //   GET  /test/requests -> { count }: API calls received since the last reset
@@ -37,7 +38,7 @@ const KEY_PATTERN = /^mbl_[\w-]{43}$/
 
 const defaultState = () => ({
   balanceSats: 100_000,
-  payLink: { active: true, lnurl: 'LNURL1DP68GURN8GHJ7MRWW4EXCTNXD9SHG6NPVCHXXMMD9AKXUATJD3CZ7MOCKMARBLES', address: 'piggy@marbles-mock' },
+  payLink: { lnurl: 'LNURL1DP68GURN8GHJ7MRWW4EXCTNXD9SHG6NPVCHXXMMD9AKXUATJD3CZ7MOCKMARBLES', address: 'piggy@marbles-mock' },
   // { amountSats, comment, kind, description, direction, settledAt } | null
   lastTx: null,
   // false: the API drops the connection (marbles is down).
@@ -69,6 +70,9 @@ const readJson = req =>
   })
 
 const msat = sats => String(sats * 1000)
+const DAY_MS = 86_400_000
+// marbles reads transactions within the 30 days before `to` (or now) unless `from` says otherwise.
+const RANGE_DAYS = 30
 
 const rightsOf = (key) => {
   if (key.startsWith('mbl_payright')) return ['read', 'pay_links', 'pay']
@@ -116,7 +120,7 @@ const recordTx = (payment) => {
         kind: payment.kind ?? 'lnurl-pay',
         description: payment.description ?? null,
         direction: payment.direction ?? 'in',
-        settledAt: new Date().toISOString(),
+        settledAt: new Date(Date.now() - Number(payment.daysAgo ?? 0) * DAY_MS).toISOString(),
       }
     : null
 }
@@ -133,7 +137,7 @@ const api = (req, res, url) => {
 
   const path = url.pathname.slice('/api/v1'.length)
   const query = [...url.searchParams.keys()]
-  const allowed = path.endsWith('/transactions') ? ['limit', 'cursor', 'kind', 'status'] : []
+  const allowed = path.endsWith('/transactions') ? ['limit', 'cursor', 'kind', 'status', 'from', 'to'] : []
   if (query.some(name => !allowed.includes(name))) return error(res, 400, 'invalid_request')
 
   if (req.method === 'GET' && path === '/key') {
@@ -159,7 +163,7 @@ const api = (req, res, url) => {
         balance_msat: msat(state.balanceSats),
         in_flight_msat: '0',
         in_flight_count: 0,
-        active_pay_links: state.payLink?.active ? 1 : 0,
+        active_pay_links: state.payLink ? 1 : 0,
         open_withdraw_links: 0,
         limits: { day: null, week: null },
         status: 'active',
@@ -167,7 +171,13 @@ const api = (req, res, url) => {
       })
     case '/transactions': {
       const status = url.searchParams.get('status')
-      const txs = state.lastTx && (status === null || status === 'settled') ? [transaction(state.lastTx)] : []
+      const [from, to] = ['from', 'to'].map(name => url.searchParams.get(name))
+      const [start, end] = [from, to].map(time => (time === null ? null : Date.parse(time)))
+      if (Number.isNaN(start) || Number.isNaN(end) || (start !== null && end !== null && start >= end)) return error(res, 400, 'invalid_request')
+      const until = end ?? Infinity
+      const since = start ?? (end ?? Date.now()) - RANGE_DAYS * DAY_MS
+      const made = state.lastTx && Date.parse(state.lastTx.settledAt)
+      const txs = state.lastTx && (status === null || status === 'settled') && made >= since && made < until ? [transaction(state.lastTx)] : []
       return send(res, 200, { transactions: txs, next_cursor: null })
     }
     case '/pay-links':
@@ -184,7 +194,6 @@ const api = (req, res, url) => {
               success_message: null,
               success_url: null,
               address: state.payLink.address ?? null,
-              active: state.payLink.active ?? true,
               created_at: '2026-11-13T00:00:00.000Z',
               url: state.payLink.lnurl ? 'https://marbles-mock/lnurlp/Lk3f' : null,
               lnurl: state.payLink.lnurl ?? null,

@@ -296,6 +296,20 @@ test('test connection shows wallet, balance, pay link and key expiry, and warns 
   }
 })
 
+test('a payment older than the 30 days marbles reads by default is still the last payment', async ({ page }) => {
+  await setMarbles({ payment: { sats: 2_100, comment: 'Long ago', daysAgo: 40 } })
+  await onMarbles(page, 'Marbles old payment', '6462', marblesKey('oldpayment'))
+
+  try {
+    const child = await page.context().newPage()
+    await login(child, '6462')
+    await expect(child.getByTestId('sats-balance')).toHaveText('0.00100000 BTC', BALANCE_TIMEOUT)
+    await expect(child.getByText('Message: Long ago')).toBeVisible()
+  } finally {
+    await deleteByName(page, 'Marbles old payment')
+  }
+})
+
 test('the admin list shows a marbles row with its pay link and last transaction', async ({ page }) => {
   await setMarbles({ payment: { sats: 2_100, comment: 'Birthday' } })
   await onMarbles(page, 'Marbles row', '6458', marblesKey('row'))

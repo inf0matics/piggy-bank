@@ -18,8 +18,8 @@ export const marblesKey = (kind = 'piggy') => `mbl_${kind.padEnd(43, '0')}`
 
 export interface MarblesMockState {
   balance?: number // sats
-  payLink?: { lnurl?: string | null, address?: string | null, active?: boolean } | null
-  payment?: { sats: number, comment?: string | null, kind?: string, description?: string | null, direction?: 'in' | 'out' } | null
+  payLink?: { lnurl?: string | null, address?: string | null } | null
+  payment?: { sats: number, comment?: string | null, kind?: string, description?: string | null, direction?: 'in' | 'out', daysAgo?: number } | null
   reachable?: boolean // false: the API drops the connection
   retryAfter?: number | null // seconds: every API call answers 429 with this Retry-After
 }
@@ -34,7 +34,7 @@ const call = async (method: 'GET' | 'POST', path: string, body?: unknown) => {
   return res.json()
 }
 
-/** Restore the default: 100,000 sats, an active pay link, no transaction, reachable. */
+/** Restore the default: 100,000 sats, a pay link, no transaction, reachable. */
 export const resetMarbles = () => call('POST', '/test/reset')
 
 export const setMarbles = (state: MarblesMockState) => call('POST', '/test/set', state)

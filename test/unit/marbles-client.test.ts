@@ -57,7 +57,6 @@ const transaction = (fields: Record<string, unknown> = {}) => ({
 
 const payLink = (fields: Record<string, unknown> = {}) => ({
   id: 'Lk3fQ0pBc9dZrWa1LeTxQ0pBc9dZrWa1LeTxQ0pBc9d',
-  active: true,
   lnurl: 'LNURL1NEWEST',
   address: 'anna@marbles.test',
   ...fields,
@@ -100,7 +99,7 @@ describe('marbles requests', () => {
     await readKey(conn)
     assert.deepEqual(calls.map(c => c.url), [
       `https://marbles.test/api/v1/wallets/${conn.wallet}`,
-      `https://marbles.test/api/v1/wallets/${conn.wallet}/transactions?limit=1&status=settled`,
+      `https://marbles.test/api/v1/wallets/${conn.wallet}/transactions?limit=1&status=settled&from=1970-01-01T00:00:00Z`,
       `https://marbles.test/api/v1/wallets/${conn.wallet}/pay-links`,
       'https://marbles.test/api/v1/key',
     ])
@@ -168,6 +167,12 @@ describe('readBalance: the last payment', () => {
     assert.equal((await last({ lnurl_params: { link: 'Lk' }, description: null }))?.comment, null)
   })
 
+  it('reads back to the start, as marbles reads only the last 30 days without `from`', async () => {
+    answer(...balance('1000', transaction({ settled_at: '2025-01-01T00:00:00.000Z' })))
+    await readBalance(conn)
+    assert.equal(new URL(calls[1]!.url).searchParams.get('from'), '1970-01-01T00:00:00Z')
+  })
+
   it('is null for a wallet without settled transactions', async () => {
     answer(...balance())
     assert.equal((await readBalance(conn)).lastPayment, null)
@@ -183,12 +188,20 @@ describe('readBalance: the last payment', () => {
 })
 
 describe('readDeposit', () => {
-  it('takes the newest active pay link', async () => {
-    answer(json(200, { pay_links: [payLink({ active: false, lnurl: 'LNURL1OFF' }), payLink(), payLink({ lnurl: 'LNURL1OLDER' })] }))
+  it('takes the newest pay link (marbles lists no deleted ones and sends no `active`)', async () => {
+    answer(json(200, { pay_links: [payLink(), payLink({ lnurl: 'LNURL1OLDER' })] }))
     assert.deepEqual(await readDeposit(conn), { lnurl: 'LNURL1NEWEST', address: 'anna@marbles.test' })
   })
 
-  it('is null without an active link, or without a public URL on marbles (lnurl null)', async () => {
+  it('skips a link an older marbles still lists as deactivated (`active: false`)', async () => {
+    answer(json(200, { pay_links: [payLink({ active: false, lnurl: 'LNURL1OFF' }), payLink({ active: true }), payLink({ lnurl: 'LNURL1OLDER' })] }))
+    assert.deepEqual(await readDeposit(conn), { lnurl: 'LNURL1NEWEST', address: 'anna@marbles.test' })
+  })
+
+  it('is null without a link, or without a public URL on marbles (lnurl null)', async () => {
+    answer(json(200, { pay_links: [] }))
+    assert.equal(await readDeposit(conn), null)
+    resetMarblesCache()
     answer(json(200, { pay_links: [payLink({ active: false })] }))
     assert.equal(await readDeposit(conn), null)
     resetMarblesCache()
