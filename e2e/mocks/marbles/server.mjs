@@ -6,7 +6,7 @@
 // undocumented query parameters answer 400.
 //   GET /api/v1/key                                     -> { label, wallets, rights, expires_at, … }
 //   GET /api/v1/wallets/:wallet                         -> { name, balance_msat, … }
-//   GET /api/v1/wallets/:wallet/transactions?limit&status&from&to -> { transactions, next_cursor }
+//   GET /api/v1/wallets/:wallet/transactions?limit&status&from&to -> { transactions, next_cursor, range }
 //     always within a range, as marbles: without `from`, the 30 days before `to` or now
 //   GET /api/v1/wallets/:wallet/pay-links               -> { pay_links }
 //
@@ -178,7 +178,9 @@ const api = (req, res, url) => {
       const since = start ?? (end ?? Date.now()) - RANGE_DAYS * DAY_MS
       const made = state.lastTx && Date.parse(state.lastTx.settledAt)
       const txs = state.lastTx && (status === null || status === 'settled') && made >= since && made < until ? [transaction(state.lastTx)] : []
-      return send(res, 200, { transactions: txs, next_cursor: null })
+      // The range it read in, in UTC (contract 1.2.0): `from` as given or the default, `to` or null.
+      const range = { from: new Date(since).toISOString(), to: end === null ? null : new Date(end).toISOString() }
+      return send(res, 200, { transactions: txs, next_cursor: null, range })
     }
     case '/pay-links':
       if (!rightsOf(key).includes('pay_links')) return error(res, 403, 'forbidden')
