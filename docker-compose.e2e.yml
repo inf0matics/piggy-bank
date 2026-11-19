@@ -8,14 +8,14 @@ services:
     # Container serves on :80; the app reaches it at http://lnbits-mock.
     # Host port 5001 is mapped for Playwright control calls.
     ports:
-      - '5001:80'
+      - '127.0.0.1:5001:80'
 
   marbles-mock:
     build:
       context: ./e2e/mocks/marbles
     # The app reaches it at http://marbles-mock; host port 5002 for control calls.
     ports:
-      - '5002:80'
+      - '127.0.0.1:5002:80'
 
   piggybank:
     # Pin to amd64 (production's architecture): the app's optional native deps
@@ -55,7 +55,7 @@ services:
     ports:
       # Host port 3100 (not 3000) so the E2E app never collides with a local
       # `npm run dev` server. Playwright's baseURL points here.
-      - '3100:3000'
+      - '127.0.0.1:3100:3000'
     depends_on:
       lnbits-mock:
         condition: service_healthy
