@@ -21,7 +21,7 @@ export const createPinChangeGuard = (conflicts: AttemptLimit) => ({
     return null
   },
   /** The 409 for a PIN another piggy bank has, counted against `owner`. */
-  inUse: (owner: string): Refusal => {
+  recordConflict: (owner: string): Refusal => {
     conflicts.record(owner)
     return { statusCode: 409, statusMessage: 'PIN is already in use' }
   },

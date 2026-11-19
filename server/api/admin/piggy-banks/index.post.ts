@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   try {
     return insertUser(parsed.data, admin.sub)
   } catch (error) {
-    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.inUse(admin.sub))
+    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.recordConflict(admin.sub))
     throw error
   }
 })

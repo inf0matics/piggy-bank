@@ -1,7 +1,6 @@
 // The e2e admin shim makes any request with an `e2e_admin` cookie an admin. It
 // must never be live by accident: outside `nuxt dev` it needs an explicit
-// ALLOW_E2E_ADMIN_AUTH=true, which only the e2e compose sets (security audit
-// before v1.19).
+// ALLOW_E2E_ADMIN_AUTH=true, which only the e2e compose sets.
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { e2eAdminAuthRefused } from '../../server/utils/adminAuthMode.ts'

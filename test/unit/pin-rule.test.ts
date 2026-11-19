@@ -1,6 +1,6 @@
 // A child's PIN is the only secret of the child login, so a new or changed PIN
 // needs at least PIN_MIN_LENGTH characters. A PIN made before the rule keeps
-// working until it is changed (security audit before v1.19).
+// working until it is changed.
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { PIN_MIN_LENGTH, pinError } from '../../server/domain/user.ts'

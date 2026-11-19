@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   try {
     updated = updateOwnedUser(id, admin.sub, parsed.data)
   } catch (error) {
-    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.inUse(admin.sub))
+    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.recordConflict(admin.sub))
     throw error
   }
 

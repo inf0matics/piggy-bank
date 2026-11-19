@@ -1,4 +1,4 @@
-// Brute-force limit (security audit before v1.19): PIN conflicts per
+// Brute-force limit: PIN conflicts per
 // custodian. Failed PIN logins have their own limit (login-limit.test.ts).
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'

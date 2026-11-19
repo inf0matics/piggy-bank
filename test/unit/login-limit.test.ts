@@ -1,4 +1,4 @@
-// Failed PIN logins per client address (security audit before v1.19): ten
+// Failed PIN logins per client address: ten
 // failures in ten minutes block the address, and each repeat lockout within a
 // day blocks it longer.
 import assert from 'node:assert/strict'

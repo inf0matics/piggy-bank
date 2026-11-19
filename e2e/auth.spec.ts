@@ -79,7 +79,7 @@ test('Already logged in - navigating to / redirects to dashboard', async ({ page
   await page.waitForURL('**/dashboard')
 })
 
-// Brute-force limit (security audit before v1.19): 10 failed PIN logins from
+// Brute-force limit: 10 failed PIN logins from
 // one address within 10 minutes block that address for 10 minutes, a repeat
 // lockout within a day for 1 hour, then 24 hours. Each test uses addresses
 // of its own (198.18.0.0/15, per retry), so a block never reaches another test

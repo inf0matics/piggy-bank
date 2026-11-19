@@ -4,12 +4,10 @@ import { clientIp, createLoginLimit, isLoginPath } from '../utils/loginLimit'
 const MINUTE = 60_000
 
 // The child login has the PIN as its only secret and no username, so failed
-// attempts are limited per client address: after 10 within 10 minutes the
-// address gets 429 for 10 minutes, the right PIN included. A repeat lockout
-// within a day lasts 1 hour, then 24 hours. Each attempt counts as soon as it
-// arrives, so parallel guesses cannot all pass the check before the first one
-// fails; it is given back once its answer is not a 401. Failed and blocked
-// attempts are logged with the address, so an attack shows in the logs.
+// attempts are limited per client address, the right PIN included once
+// blocked. Each attempt counts as soon as it arrives, so parallel guesses
+// cannot all pass the check before the first one fails; it is settled once its
+// answer is known. Failed and blocked attempts are logged with the address.
 const failedLogins = createLoginLimit({
   max: 10,
   windowMs: 10 * MINUTE,
