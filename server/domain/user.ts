@@ -99,6 +99,16 @@ export const MarblesSettingsSchema = z.object({
 
 const optionalText = z.string().trim().nullish().transform(value => value ?? '')
 
+/** The shortest PIN a piggy bank can be given or changed to. */
+export const PIN_MIN_LENGTH = 4
+
+/**
+ * Why `pin` cannot be set, or null. A PIN made before the length rule keeps
+ * working until it is changed, so an unchanged `current` PIN always passes.
+ */
+export const pinError = (pin: string, current?: string): string | null =>
+  pin !== current && pin.length < PIN_MIN_LENGTH ? `The PIN needs at least ${PIN_MIN_LENGTH} characters` : null
+
 // The marbles settings are optional: without a key and a wallet the piggy bank
 // has no marbles connection (a pre-filled default URL alone is none).
 export const UserInputSchema = z.object({

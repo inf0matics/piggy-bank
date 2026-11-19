@@ -149,6 +149,27 @@ test('create: Add opens the form, default URL is pre-filled, submit adds a row',
   if (created) await deletePiggyBank(page, created.id)
 })
 
+test('create: a PIN shorter than 4 characters is refused with the reason', async ({ page }) => {
+  await page.goto('/admin/piggy-banks/new')
+  await page.locator('#name').fill('Shortpin')
+  await page.locator('#accessKey').fill('123')
+  await page.locator('#lnbitsUrl').fill('http://lnbits-mock')
+  await page.locator('#invoiceKey').fill('test-invoice-key')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page.getByText('The PIN needs at least 4 characters')).toBeVisible()
+  expect(await findByName(page, 'Shortpin')).toBeUndefined()
+})
+
+test('create: a PIN another piggy bank has is refused as in use', async ({ page }) => {
+  // One conflict: the custodian's limit is 5 an hour, so the suite never hits it.
+  const response = await page.request.post('/api/admin/piggy-banks', {
+    data: { name: 'Takenpin', accessKey: '0000', lnbitsUrl: 'http://lnbits-mock', invoiceKey: 'test-invoice-key' },
+  })
+  expect(response.status()).toBe(409)
+  expect(await findByName(page, 'Takenpin')).toBeUndefined()
+})
+
 test('test connection: reports connectivity and LNURL-p status', async ({ page }) => {
   await page.goto('/admin/piggy-banks/new')
   const url = page.locator('#lnbitsUrl')

@@ -47,6 +47,9 @@ services:
       # Enables the admin auth test shim: an `e2e_admin` cookie counts as an
       # authenticated admin so the CRUD tests run without a real Logto tenant.
       NUXT_PUBLIC_ADMIN_AUTH_MODE: e2e
+      # A built server refuses to start with the shim unless this is set:
+      # only this test stack may run it.
+      ALLOW_E2E_ADMIN_AUTH: 'true'
     volumes:
       - ./e2e/seed-test-db.mjs:/seed.mjs:ro
     ports:

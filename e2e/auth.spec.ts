@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type APIRequestContext } from '@playwright/test'
 import { login } from './helpers/login'
 import { resetMock } from './helpers/mockControl'
 
@@ -77,4 +77,28 @@ test('Already logged in - navigating to / redirects to dashboard', async ({ page
   // login page's redirectIfLoggedIn() guard and bounces back to the dashboard.
   await page.goto('/')
   await page.waitForURL('**/dashboard')
+})
+
+// Brute-force limit (security audit before v1.19): 10 failed PIN logins from
+// one address within 10 minutes block that address. Each test uses an address
+// of its own (TEST-NET), so the block never reaches the other tests.
+const loginFrom = (request: APIRequestContext, ip: string, accessKey: string) =>
+  request.post('/api/auth/login', { data: { accessKey }, headers: { 'X-Forwarded-For': ip } })
+
+test('PIN login - ten failed attempts block that address, not others', async ({ request }) => {
+  for (let i = 0; i < 10; i++) {
+    expect((await loginFrom(request, '203.0.113.10', `wrong-${i}`)).status()).toBe(401)
+  }
+  // Blocked: even the right PIN is refused now.
+  const blocked = await loginFrom(request, '203.0.113.10', PIN)
+  expect(blocked.status()).toBe(429)
+  expect(await blocked.text()).not.toContain('accessToken')
+
+  expect((await loginFrom(request, '203.0.113.11', PIN)).status()).toBe(200)
+})
+
+test('PIN login - a successful login does not count as a failure', async ({ request }) => {
+  for (let i = 0; i < 12; i++) {
+    expect((await loginFrom(request, '203.0.113.12', PIN)).status()).toBe(200)
+  }
 })
