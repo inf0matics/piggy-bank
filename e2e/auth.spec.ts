@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext } from '@playwright/test'
+import { test, expect, type APIRequestContext, type TestInfo } from '@playwright/test'
 import { login } from './helpers/login'
 import { resetMock } from './helpers/mockControl'
 
@@ -80,25 +80,50 @@ test('Already logged in - navigating to / redirects to dashboard', async ({ page
 })
 
 // Brute-force limit (security audit before v1.19): 10 failed PIN logins from
-// one address within 10 minutes block that address. Each test uses an address
-// of its own (TEST-NET), so the block never reaches the other tests.
-const loginFrom = (request: APIRequestContext, ip: string, accessKey: string) =>
-  request.post('/api/auth/login', { data: { accessKey }, headers: { 'X-Forwarded-For': ip } })
+// one address within 10 minutes block that address. Each test uses addresses
+// of its own (198.18.0.0/15, per retry), so a block never reaches another test
+// or a retry of the same one.
+const LOGIN = '/api/auth/login'
+const loginFrom = (request: APIRequestContext, ip: string, accessKey: string, path = LOGIN) =>
+  request.post(path, { data: { accessKey }, headers: { 'X-Forwarded-For': ip } })
+const address = (testInfo: TestInfo, n: number) => `198.18.${testInfo.retry}.${n}`
 
-test('PIN login - ten failed attempts block that address, not others', async ({ request }) => {
+test('PIN login - ten failed attempts block that address, not others', async ({ request }, testInfo) => {
+  const ip = address(testInfo, 10)
   for (let i = 0; i < 10; i++) {
-    expect((await loginFrom(request, '203.0.113.10', `wrong-${i}`)).status()).toBe(401)
+    expect((await loginFrom(request, ip, `wrong-${i}`)).status()).toBe(401)
   }
   // Blocked: even the right PIN is refused now.
-  const blocked = await loginFrom(request, '203.0.113.10', PIN)
+  const blocked = await loginFrom(request, ip, PIN)
   expect(blocked.status()).toBe(429)
   expect(await blocked.text()).not.toContain('accessToken')
 
-  expect((await loginFrom(request, '203.0.113.11', PIN)).status()).toBe(200)
+  expect((await loginFrom(request, address(testInfo, 11), PIN)).status()).toBe(200)
 })
 
-test('PIN login - a successful login does not count as a failure', async ({ request }) => {
+test('PIN login - a successful login does not count as a failure', async ({ request }, testInfo) => {
   for (let i = 0; i < 12; i++) {
-    expect((await loginFrom(request, '203.0.113.12', PIN)).status()).toBe(200)
+    expect((await loginFrom(request, address(testInfo, 12), PIN)).status()).toBe(200)
   }
+})
+
+test('PIN login - every spelling of the login path shares the limit', async ({ request }, testInfo) => {
+  const ip = address(testInfo, 13)
+  const variants = [`${LOGIN}/`, '/api/auth/%6Cogin', `${LOGIN}?x=1`]
+  for (let i = 0; i < 10; i++) {
+    expect((await loginFrom(request, ip, `wrong-${i}`, variants[i % variants.length])).status()).toBe(401)
+  }
+  for (const path of [LOGIN, ...variants]) {
+    expect((await loginFrom(request, ip, PIN, path)).status(), path).toBe(429)
+  }
+})
+
+test('PIN login - a burst of parallel guesses gets no more than ten tries', async ({ request }, testInfo) => {
+  const ip = address(testInfo, 14)
+  const statuses = await Promise.all(
+    Array.from({ length: 25 }, (_, i) => loginFrom(request, ip, `wrong-${i}`).then(r => r.status())),
+  )
+  expect(statuses.filter(status => status === 401).length).toBeLessThanOrEqual(10)
+  expect(statuses.every(status => status === 401 || status === 429)).toBe(true)
+  expect((await loginFrom(request, ip, PIN)).status()).toBe(429)
 })

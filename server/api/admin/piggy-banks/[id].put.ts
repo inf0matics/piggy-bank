@@ -1,5 +1,5 @@
 import { UserInputSchema } from '~/server/domain/user'
-import { checkPinChange, pinInUse } from '~/server/utils/pinChange'
+import { pinChanges } from '~/server/utils/pinChange'
 
 export default defineEventHandler(async (event) => {
   const admin = requireAdmin(event)
@@ -18,13 +18,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Piggy bank not found' })
   }
   if (current.balance.source === 'marbles' && !parsed.data.marbles) throw marblesNeeded()
-  checkPinChange(admin.sub, parsed.data.accessKey, current.accessKey)
+  const refusal = pinChanges.refusal(admin.sub, parsed.data.accessKey, current.accessKey)
+  if (refusal) throw createError(refusal)
 
   let updated
   try {
     updated = updateOwnedUser(id, admin.sub, parsed.data)
   } catch (error) {
-    if (String((error as Error)?.message).includes('UNIQUE')) throw pinInUse(admin.sub)
+    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.inUse(admin.sub))
     throw error
   }
 

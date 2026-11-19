@@ -1,5 +1,5 @@
 import { UserInputSchema } from '~/server/domain/user'
-import { checkPinChange, pinInUse } from '~/server/utils/pinChange'
+import { pinChanges } from '~/server/utils/pinChange'
 
 export default defineEventHandler(async (event) => {
   const admin = requireAdmin(event)
@@ -9,12 +9,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: parsed.error.issues[0]?.message ?? 'Invalid input' })
   }
 
-  checkPinChange(admin.sub, parsed.data.accessKey)
+  const refusal = pinChanges.refusal(admin.sub, parsed.data.accessKey)
+  if (refusal) throw createError(refusal)
 
   try {
     return insertUser(parsed.data, admin.sub)
   } catch (error) {
-    if (String((error as Error)?.message).includes('UNIQUE')) throw pinInUse(admin.sub)
+    if (String((error as Error)?.message).includes('UNIQUE')) throw createError(pinChanges.inUse(admin.sub))
     throw error
   }
 })
