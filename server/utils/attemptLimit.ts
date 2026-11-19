@@ -1,4 +1,4 @@
-// Counts attempts per key (a client IP, a custodian) in a fixed window and
+// Counts attempts per key (a custodian's PIN conflicts) in a fixed window and
 // says when a key has used them up. In memory: the app is one container, and a
 // restart only gives an attacker one fresh window.
 
@@ -7,8 +7,6 @@ export interface AttemptLimit {
   blocked: (key: string) => boolean
   /** Counts one attempt for `key`. */
   record: (key: string) => void
-  /** Takes back one attempt of `key`'s current window that turned out not to count. */
-  release: (key: string) => void
   /** Keys held (tests). */
   size: () => number
 }
@@ -34,33 +32,6 @@ export const createAttemptLimit = ({ max, windowMs, now = Date.now }: { max: num
       if (entry) entry.count += 1
       else windows.set(key, { count: 1, resetAt: time + windowMs })
     },
-    release: (key) => {
-      const entry = current(key)
-      if (!entry) return
-      entry.count -= 1
-      if (entry.count <= 0) windows.delete(key)
-    },
     size: () => windows.size,
   }
-}
-
-/**
- * The client's address: the last X-Forwarded-For entry, which Traefik (the
- * only way in) appends, else the socket's address.
- */
-export const clientIp = (forwardedFor: string | undefined, remoteAddress: string | undefined): string =>
-  forwardedFor?.split(',').at(-1)?.trim() || remoteAddress || 'unknown'
-
-/**
- * Whether `pathname` is the child login, however it is spelled: the router
- * also serves it percent-encoded, with doubled or trailing slashes.
- */
-export const isLoginPath = (pathname: string): boolean => {
-  let path: string
-  try {
-    path = decodeURIComponent(pathname)
-  } catch {
-    return false
-  }
-  return path.replace(/\/{2,}/g, '/').replace(/\/+$/, '').toLowerCase() === '/api/auth/login'
 }

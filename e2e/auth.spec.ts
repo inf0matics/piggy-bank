@@ -80,7 +80,8 @@ test('Already logged in - navigating to / redirects to dashboard', async ({ page
 })
 
 // Brute-force limit (security audit before v1.19): 10 failed PIN logins from
-// one address within 10 minutes block that address. Each test uses addresses
+// one address within 10 minutes block that address for 10 minutes, a repeat
+// lockout within a day for 1 hour, then 24 hours. Each test uses addresses
 // of its own (198.18.0.0/15, per retry), so a block never reaches another test
 // or a retry of the same one.
 const LOGIN = '/api/auth/login'
@@ -97,6 +98,10 @@ test('PIN login - ten failed attempts block that address, not others', async ({ 
   const blocked = await loginFrom(request, ip, PIN)
   expect(blocked.status()).toBe(429)
   expect(await blocked.text()).not.toContain('accessToken')
+  // The first lockout lasts 10 minutes, and the answer says so.
+  const retryAfter = Number(blocked.headers()['retry-after'])
+  expect(retryAfter).toBeGreaterThan(590)
+  expect(retryAfter).toBeLessThanOrEqual(600)
 
   expect((await loginFrom(request, address(testInfo, 11), PIN)).status()).toBe(200)
 })
