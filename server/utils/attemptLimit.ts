@@ -23,8 +23,10 @@ export const createAttemptLimit = ({ max, windowMs, now = Date.now }: { max: num
     blocked: key => (current(key)?.count ?? 0) >= max,
     record: (key) => {
       const time = now()
+      // Windows are added in the order they end, so the expired ones are first.
       for (const [k, entry] of windows) {
-        if (entry.resetAt <= time) windows.delete(k)
+        if (entry.resetAt > time) break
+        windows.delete(k)
       }
       const entry = windows.get(key)
       if (entry) entry.count += 1
