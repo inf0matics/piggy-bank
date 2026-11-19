@@ -23,19 +23,26 @@ jobs:
         
       - name: Extract version from package.json & short commit hash & check for RUN_PIPELINE in commit message
         id: extract_version
+        # The commit message goes through env, never into the script text, so
+        # a crafted message can't run as shell.
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           VERSION=$(jq -r '.version' package.json)
           SHORT_HASH=$(git rev-parse --short HEAD)
-          if echo "${{ github.event.head_commit.message }}" | grep -q "RUN_PIPELINE"; then
+          if printf '%s' "$COMMIT_MESSAGE" | grep -q "RUN_PIPELINE"; then
             echo "version=${VERSION}.${SHORT_HASH}" >> $GITHUB_OUTPUT
           else
             echo "version=${VERSION}" >> $GITHUB_OUTPUT
           fi
 
       - name: if RUN_PIPELINE, add special-version to package.json
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          VERSION: ${{ steps.extract_version.outputs.version }}
         run: |
-          if echo "${{ github.event.head_commit.message }}" | grep -q "RUN_PIPELINE"; then
-            jq '.meta["special-version"] = "${{ steps.extract_version.outputs.version }}"' package.json > package.tmp.json && mv package.tmp.json package.json
+          if printf '%s' "$COMMIT_MESSAGE" | grep -q "RUN_PIPELINE"; then
+            jq --arg v "$VERSION" '.meta["special-version"] = $v' package.json > package.tmp.json && mv package.tmp.json package.json
           fi
           
       - name: Set up Docker Buildx
