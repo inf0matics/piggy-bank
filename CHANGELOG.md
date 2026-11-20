@@ -1,6 +1,36 @@
 # Changelog
 
 
+## v1.19.0
+
+[compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.18.0...v1.19.0)
+
+### 🩹 Fixes
+
+- **marbles:** Follow the API v1 update (30-day transaction range, pay links without active) ([394754a](https://github.com/inf0matics/piggy-bank/commit/394754a))
+- **security:** Limit PIN guessing and refuse the e2e admin shim on a server ([784a964](https://github.com/inf0matics/piggy-bank/commit/784a964))
+- **review:** Close two gaps in the PIN login limit and test the conflict limit ([9628d69](https://github.com/inf0matics/piggy-bank/commit/9628d69))
+- **security:** Keep the commit message out of workflow shell and dev ports off the network ([0d7bca6](https://github.com/inf0matics/piggy-bank/commit/0d7bca6))
+- **security:** Block repeat PIN guessers longer and log failed logins ([c33149d](https://github.com/inf0matics/piggy-bank/commit/c33149d))
+- **review:** Publish the e2e stack's ports on localhost only ([b53f08e](https://github.com/inf0matics/piggy-bank/commit/b53f08e))
+
+### 💅 Refactors
+
+- Stop the attempt-limit sweep at the first live window ([3ae637d](https://github.com/inf0matics/piggy-bank/commit/3ae637d))
+- Name the PIN-conflict call after what it does and trim limit comments ([9fd31ad](https://github.com/inf0matics/piggy-bank/commit/9fd31ad))
+
+### ✅ Tests
+
+- **e2e:** The marbles mock names the range of a transaction list (contract 1.2.0) ([e54a79c](https://github.com/inf0matics/piggy-bank/commit/e54a79c))
+
+### 🤖 CI
+
+- Push the container image to GHCR instead of Docker Hub ([3e7b2fd](https://github.com/inf0matics/piggy-bank/commit/3e7b2fd))
+
+### ❤️ Contributors
+
+- Inf0matics <fil@thespielplatz.com>
+
 ## v1.18.0
 
 [compare changes](https://github.com/inf0matics/piggy-bank/compare/v1.17.0...v1.18.0)
